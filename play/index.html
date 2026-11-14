@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Drive a creek piece, and take photos of the ute on it.
+     play/#<code>        a piece someone shared: the whole piece is in the code, checked strictly before it is used
+     play/?id=<id>       one of this browser's own pieces (...&look=1 starts with the free camera, for the builder's
+                         "Look around in 3D" window, which follows the builder's changes by itself)
+     play/               the example piece
+     The game is creeklab.js, .wasm and .data beside this page. Nothing here is sent anywhere. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Bush Drift</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #111; color: #ddd; font: 14px/1.4 system-ui, sans-serif;
+               overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+  body { display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: #fbf9f3; color: #23271f; border-bottom: 1px solid #d6d0c0; flex: none; flex-wrap: wrap; }
+  header a { color: #2f6b3c; white-space: nowrap; }
+  #pname { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
+  #pinfo { font-size: 12.5px; color: #4c5246; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grow { flex: 1; }
+  #fps { font-size: 12.5px; color: #4c5246; white-space: nowrap; text-align: right; }
+  button { font: inherit; border: 1px solid #b9b3a2; border-radius: 6px; background: #fff; color: #23271f; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
+  button.primary { background: #2f6b3c; border-color: #2f6b3c; color: #fff; font-weight: 600; }
+  button.newer { background: #b65c00; border-color: #b65c00; color: #fff; font-weight: 600; }
+  #keys { flex: none; padding: 5px 12px; background: #23271f; color: #cfd3c8; font-size: 12.5px; line-height: 1.9; }
+  #keys.shut { display: none; }
+  kbd { background: #444a3d; color: #fff; border-radius: 3px; padding: 1px 6px; font: 12px system-ui, sans-serif; }
+  #keys b { color: #fff; font-weight: 600; }
+  #game { position: relative; flex: 1; min-height: 0; background: #000; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #000; image-rendering: pixelated; outline: none; touch-action: none; }
+  #status { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); padding: 14px 20px; border-radius: 8px;
+            background: rgba(20,16,30,.92); text-align: center; max-width: 80%; font-size: 15px; -webkit-user-select: text; user-select: text; }
+  #status:empty { display: none; }
+  #status a { color: #9fd0a8; }
+  #status p { margin: 0 0 10px; }
+  #shot { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; padding: 8px 12px;
+          border-radius: 8px; background: rgba(20,16,30,.92); font-size: 14px; max-width: 92%; }
+  #shot[hidden] { display: none; }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity .35s; }
+  #flash.on { opacity: .7; transition: none; }
+  /* photo mode on a touch screen: the camera's own controls, over the picture (never in the photo itself) */
+  #cam { position: absolute; inset: 0; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #cam[hidden] { display: none; }
+  #cam button { position: absolute; background: rgba(20,16,30,.62); border: 1.5px solid rgba(255,255,255,.55); color: #fff; font-size: 15px; font-weight: 600;
+                border-radius: 10px; padding: 0; touch-action: none; }
+  #cam button.held, #cam button:active { background: rgba(255,255,255,.35); }
+  #campad { position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: 18px; width: 132px; height: 132px; border-radius: 50%;
+            background: rgba(20,16,30,.45); border: 1.5px solid rgba(255,255,255,.5); touch-action: none; }
+  #camknob { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: rgba(255,255,255,.6); pointer-events: none; }
+  #camup, #camdown { right: max(18px, env(safe-area-inset-right)); width: 76px; height: 58px; }
+  #camup { bottom: 86px; } #camdown { bottom: 18px; }
+  #camshot { right: max(18px, env(safe-area-inset-right)); top: 12px; width: 96px; height: 50px; background: rgba(46,125,50,.85) !important; }
+  #camback { left: max(18px, env(safe-area-inset-left)); top: 12px; height: 44px; padding: 0 14px !important; }
+  #camtip { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); max-width: 46%; padding: 6px 10px; border-radius: 8px; background: rgba(20,16,30,.62);
+            color: #fff; font-size: 12.5px; text-align: center; pointer-events: none; transition: opacity .6s; }
+  #camtip.gone { opacity: 0; }
+  @media (max-width: 700px), (pointer: coarse) { #fps, #bkeys { display: none; } #keys { display: none; } }
+  /* a phone: the header stays one row (the piece's details go, its name gives way first) */
+  @media (pointer: coarse) { header { flex-wrap: nowrap; gap: 6px; padding: 5px 8px; font-size: 13px; } #pinfo { display: none; }
+    #pname { font-size: 14px; flex: 0 1 auto; min-width: 40px; max-width: none; } header button { padding: 5px 8px; } }
+</style>
+</head>
+<body>
+<header>
+  <a href="../builder.html" id="back" hidden title="Back to the builder (this tab)">&larr; Builder</a>
+  <span id="pname" data-title>Bush Drift</span>
+  <span id="pinfo"></span>
+  <span class="grow"></span>
+  <span id="fps"></span>
+  <button id="bmode" hidden title="Stops the action where it is and hands you a free camera to fly around the ute. Press again to drive on. Key: V">Take a photo (V)</button>
+  <button id="bphoto" class="primary" hidden title="Saves what you see as a picture: the view only, at full size. Key: C">Photo (C)</button>
+  <button id="bcopy" hidden title="Puts this piece in your own builder, as a new piece of yours to change">Edit a copy</button>
+  <a href="../builder.html" id="bown" hidden>Build your own</a>
+  <button id="bfs" hidden title="Hides the browser's bars and turns the game sideways">Full screen</button>
+  <button id="bkeys" title="Show or hide the list of keys">Keys</button>
+  <button id="breload" title="Loads the page again and puts the ute back at the start">Start again</button>
+</header>
+<div id="keys">
+ <div id="kdrive">
+  <b>Click the game first</b> so it has the keyboard.
+  <kbd>&uarr;</kbd> accelerate &middot; <kbd>&darr;</kbd> brake (held when stopped: reverse) &middot; <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer &middot;
+  <kbd>Space</kbd> handbrake &middot; <kbd>L</kbd> Low Range on/off &middot; <kbd>R</kbd> Recover (set down just up the creek) &middot;
+  <kbd>T</kbd> back to the start of the piece &middot; <kbd>Esc</kbd> pause menu (<kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>Enter</kbd> in menus) &middot;
+  <kbd>P</kbd> pixel size &middot; <kbd>F</kbd> full screen. The ute waits on the brakes until you first press <kbd>&uarr;</kbd>.
+  <b><kbd>V</kbd> stop for a photo</b>: everything holds still and you get a free camera.
+ </div>
+ <div id="klook" hidden>
+  <b>Photo mode</b>: the ute holds still. <b>Click the picture</b> and the mouse looks about; <b>click again</b> (or <kbd>Esc</kbd>) to get the pointer back &middot;
+  <kbd>W</kbd> <kbd>S</kbd> or <kbd>&uarr;</kbd> <kbd>&darr;</kbd> forward and back &middot; <kbd>A</kbd> <kbd>D</kbd> or <kbd>&larr;</kbd> <kbd>&rarr;</kbd> sideways &middot;
+  <kbd>E</kbd> up &middot; <kbd>Q</kbd> down &middot; hold <kbd>Shift</kbd> to move faster &middot; scroll to move along the view &middot;
+  <kbd>H</kbd> back to the first view &middot; <b><kbd>C</kbd> take the photo</b> &middot; <b><kbd>V</kbd> back to driving</b> &middot; <kbd>F</kbd> full screen.
+  <span id="kauto" hidden>When you change the piece in the builder, this view follows by itself with the camera where you left it.</span>
+ </div>
+</div>
+<div id="game">
+  <canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="cam" hidden>
+    <div id="camtip">Drag the picture to look about. Pinch to move in and out.</div>
+    <button id="camback">&larr; Back to driving</button>
+    <button id="camshot">Photo</button>
+    <div id="campad" aria-label="Move the camera: forward, back and sideways"><div id="camknob"></div></div>
+    <button id="camup">Up</button>
+    <button id="camdown">Down</button>
+  </div>
+  <div id="flash"></div>
+  <div id="status">Loading&hellip;</div>
+  <div id="shot" hidden><span id="shotmsg"></span><button id="shotshare" class="primary">Share</button><button id="shotsave">Save</button><button id="shotx" title="Close">&times;</button></div>
+</div>
+<script src="../js/common.js"></script>
+<script>
+  BD.base = '../';
+  const $ = id => document.getElementById(id);
+  const status = $('status'), canvas = $('canvas'), game = $('game');
+  const Q = new URLSearchParams(location.search);
+  const code = location.hash.length > 1 ? location.hash.slice(1) : '';      // a shared piece: not to be trusted until BD.decode has checked it
+  const ownId = code ? '' : (Q.get('id') || '');
+  const look0 = Q.get('look') === '1';      // start with the free camera
+  let piece = null;    // the checked piece being driven
+  let info = null;     // what the page knows about it (for the builder's window and the checks in test/)
+  let looking = false; // photo mode is on (as the game reports it)
+  const poseKey = () => 'bdcb-look-' + (ownId || 'shared') + '-' + (piece ? piece.slot : '');      // the camera's place, kept for this window so a reload comes back to it
+
+  // keep the arrows and space for the game, not for scrolling the page or pressing the header's buttons
+  window.addEventListener('keydown', e => { if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault(); }, { passive: false });
+  // C in photo mode takes the photo, and Esc there only gives the pointer back (the game never sees either key)
+  window.addEventListener('keydown', e => {
+    if (!looking || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'c' || e.key === 'C') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) photo(); }
+    else if (e.key === 'Escape') { e.stopImmediatePropagation(); if (document.pointerLockElement === canvas) document.exitPointerLock(); }
+  }, true);
+  canvas.addEventListener('click', () => canvas.focus());
+  // browsers keep sound off until the page is used: a key press starts it as well as a click
+  window.addEventListener('keydown', () => { if (window.miniaudio && window.miniaudio.unlock) window.miniaudio.unlock(); }, true);
+  // a real finger on the screen (a tablet or phone) shows the game's on-screen buttons; a mouse never does
+  window.addEventListener('touchstart', () => { if (Module._bd_touch_seen) Module._bd_touch_seen(); if (window.miniaudio && window.miniaudio.unlock) window.miniaudio.unlock(); }, { passive: true });
+  canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+  // Photos need the picture to still be in the canvas when it is read, so the game's canvas is asked to keep what it
+  // drew (browsers otherwise wipe it once it has been shown, and a photo would come out blank).
+  const getCtx = canvas.getContext;
+  canvas.getContext = function (type, attrs) {
+    if (/webgl/.test(String(type)) && !window.__ckNoKeep) attrs = Object.assign({}, attrs || {}, { preserveDrawingBuffer: true });
+    return getCtx.call(this, type, attrs);
+  };
+
+  // the canvas's own pixels follow its box on the page; the game reads Module.bdW and bdH each frame (which is also how frames are counted here)
+  let bw = 0, bh = 0, frames = 0;
+  function fit() {
+    const r = window.devicePixelRatio || 1;
+    bw = Math.max(160, Math.round(game.clientWidth * r)); bh = Math.max(120, Math.round(game.clientHeight * r));
+  }
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(game);
+
+  // full screen: F (the game's box only, so the header is out of the way)
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  function toggleFs() {
+    if (fsEl()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+    const p = game.requestFullscreen || game.webkitRequestFullscreen; if (!p) return;
+    const q = p.call(game); if (q && q.catch) q.catch(() => {});
+    canvas.focus();
+  }
+  window.addEventListener('keydown', e => { if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) toggleFs(); });
+  document.addEventListener('fullscreenchange', () => setTimeout(fit, 50));
+  // on a phone or tablet: a Full screen button. The whole page goes (the header's buttons stay in reach) and the screen is
+  // asked to turn sideways. An iPhone has no full screen for a web page: there the button says how to get the same from the Home Screen.
+  (function () {
+    const root = document.documentElement, b = $('bfs');
+    const touch = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+    const standalone = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+    if (!touch || standalone) return;
+    const req = root.requestFullscreen || root.webkitRequestFullscreen;
+    b.hidden = false;
+    const label = () => { b.textContent = fsEl() ? 'Leave full screen' : 'Full screen'; };
+    b.onclick = () => {
+      if (!req) { alert('An iPhone does not let a web page fill the screen. To get the same: tap Share, then Add to Home Screen, and open this from the new icon.'); return; }
+      if (fsEl()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+      const q = req.call(root);
+      const turn = () => { try { const o = screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'); if (o && o.catch) o.catch(() => {}); } catch (e) {} };
+      if (q && q.then) q.then(turn).catch(() => {}); else turn();
+    };
+    document.addEventListener('fullscreenchange', label); document.addEventListener('webkitfullscreenchange', label);
+  })();
+
+  $('bkeys').onclick = () => { $('keys').classList.toggle('shut'); fit(); canvas.focus(); };
+  // photo mode: the game's own free camera (the V key there does the same as the button here)
+  const lk = i => { try { return Module._bd_look_get ? Module._bd_look_get(i) : 0; } catch (e) { return 0; } };
+  const pose = () => [0, 1, 2, 3, 4].map(lk);
+  function keepPose() { if (looking && lk(6)) try { sessionStorage.setItem(poseKey(), pose().map(v => v.toFixed(3)).join(',')); } catch (e) {} }
+  function go(look) {      // load the page again, in the same mode
+    keepPose();
+    const u = new URL(location.href); if (look) u.searchParams.set('look', '1'); else u.searchParams.delete('look');
+    if (u.href === location.href) location.reload(); else location.replace(u.href);
+  }
+  // mouse look: a click on the picture in photo mode holds the pointer and its moves turn the view; a click again lets it go
+  const locked = () => document.pointerLockElement === canvas;
+  canvas.addEventListener('click', () => {
+    if (!looking) return;
+    if (locked()) document.exitPointerLock();
+    else { const q = canvas.requestPointerLock && canvas.requestPointerLock(); if (q && q.catch) q.catch(() => {}); }
+  });
+  document.addEventListener('mousemove', e => { if (locked() && looking && Module._bd_look_turn) Module._bd_look_turn(e.movementX || 0, e.movementY || 0); });
+  window.__ckMouse = locked;
+  $('bmode').onclick = () => { try { Module._bd_look(-1); } catch (e) {} canvas.focus(); };
+  setInterval(() => {
+    if (!Module._bd_look_get || !frames) return;
+    $('bmode').hidden = false;
+    const on = lk(5) > 0.5;
+    if (on !== looking) {
+      looking = on;
+      if (!on && locked()) document.exitPointerLock();
+      $('bmode').textContent = on ? 'Back to driving (V)' : 'Take a photo (V)'; $('bphoto').hidden = !on;
+      if (!on) $('shot').hidden = true;
+      $('kdrive').hidden = on; $('klook').hidden = !on; fit(); window.dispatchEvent(new Event('bdlook'));
+    }
+    keepPose();
+  }, 400);
+  window.addEventListener('pagehide', keepPose);
+
+  // ---------- photo mode by touch: the driving buttons go (the game hides its own) and the camera gets these ----------
+  // One finger on the picture drags the view about, two pinch along it; the round pad moves forward, back and sideways;
+  // Up and Down lift and lower. All of it stays on this layer: the game underneath never sees these fingers.
+  (function () {
+    const cam = $('cam'), pad = $('campad'), knob = $('camknob');
+    let touchUi = false, padId = null, px = 0, py = 0, vert = 0, lastT = 0, tipT = 0;
+    const fingers = new Map();      // the fingers on the picture itself: id -> [x, y]
+    let pinch = 0, push = 0;        // the pinch's last width, and metres along the view still to move
+    const show = () => {
+      const on = looking && touchUi;
+      if (on === !cam.hidden) return;
+      cam.hidden = !on; fingers.clear(); padId = null; px = py = vert = push = 0; knob.style.transform = '';
+      if (on) { $('camtip').classList.remove('gone'); clearTimeout(tipT); tipT = setTimeout(() => $('camtip').classList.add('gone'), 5000); lastT = 0; requestAnimationFrame(step); }
+    };
+    window.addEventListener('touchstart', () => { touchUi = true; show(); }, { passive: true, capture: true });
+    window.addEventListener('bdlook', show);
+    window.__ckCam = { on: () => !cam.hidden, touch: () => { touchUi = true; show(); } };      // (for the checks in test/)
+    const stop = e => { e.preventDefault(); e.stopPropagation(); };
+    for (const t of ['touchstart', 'touchmove', 'touchend', 'contextmenu']) cam.addEventListener(t, e => { if (e.target.id !== 'camshot' && e.target.id !== 'camback') e.preventDefault(); e.stopPropagation(); }, { passive: false });
+
+    cam.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse') { touchUi = false; show(); return; }      // a mouse after all: back to the click-and-look way
+      if (e.target !== cam) return;
+      fingers.set(e.pointerId, [e.clientX, e.clientY]); pinch = 0; try { cam.setPointerCapture(e.pointerId); } catch (x) {}
+    });
+    cam.addEventListener('pointermove', e => {
+      const f = fingers.get(e.pointerId); if (!f) return;
+      const dx = e.clientX - f[0], dy = e.clientY - f[1]; f[0] = e.clientX; f[1] = e.clientY;
+      if (fingers.size === 1) { if (Module._bd_look_turn) Module._bd_look_turn(dx * 1.6, dy * 1.6); }
+      else if (fingers.size === 2) {
+        const [a, b] = [...fingers.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+        if (pinch) push += (d - pinch) * 0.04;      // fingers apart: in along the view
+        pinch = d;
+      }
+    });
+    const lift = e => { if (fingers.delete(e.pointerId)) pinch = 0; };
+    cam.addEventListener('pointerup', lift); cam.addEventListener('pointercancel', lift);
+
+    const padAt = e => {
+      const r = pad.getBoundingClientRect(), R = r.width / 2;
+      let x = (e.clientX - r.left - R) / (R * 0.8), y = (e.clientY - r.top - R) / (R * 0.8);
+      const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+      px = x; py = y; knob.style.transform = 'translate(' + (x * R * 0.6).toFixed(1) + 'px,' + (y * R * 0.6).toFixed(1) + 'px)';
+    };
+    pad.addEventListener('pointerdown', e => { stop(e); padId = e.pointerId; try { pad.setPointerCapture(padId); } catch (x) {} padAt(e); });
+    pad.addEventListener('pointermove', e => { if (e.pointerId === padId) padAt(e); });
+    const padUp = e => { if (e.pointerId === padId) { padId = null; px = py = 0; knob.style.transform = ''; } };
+    pad.addEventListener('pointerup', padUp); pad.addEventListener('pointercancel', padUp);
+
+    const hold = (b, v) => {
+      b.addEventListener('pointerdown', e => { stop(e); vert = v; b.classList.add('held'); try { b.setPointerCapture(e.pointerId); } catch (x) {} });
+      const up = () => { if (vert === v) vert = 0; b.classList.remove('held'); };
+      b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
+    };
+    hold($('camup'), 1); hold($('camdown'), -1);
+    $('camshot').addEventListener('click', e => { e.stopPropagation(); photo(); });
+    $('camback').addEventListener('click', e => { e.stopPropagation(); try { Module._bd_look(-1); } catch (x) {} });
+
+    function step(t) {
+      if (cam.hidden) return;
+      requestAnimationFrame(step);
+      const dt = lastT ? Math.min(0.1, (t - lastT) / 1000) : 0; lastT = t;
+      const along = push * Math.min(1, dt * 12); push -= along;      // the pinch eased in over a few frames
+      if (!dt || !lk(6) || (!px && !py && !vert && Math.abs(along) < 1e-4) || !Module._bd_look_set) return;
+      const [x, y, z, yaw, pit] = pose(), c = Math.cos(yaw), s = Math.sin(yaw), cp = Math.cos(pit);
+      const m = Math.hypot(px, py), sp = 10 * m * dt;      // a light push creeps, a full one is 10 m/s
+      const fw = -py * sp, sd = px * sp;
+      Module._bd_look_set(x + c * fw + s * sd + cp * c * along, y + vert * 5 * dt + Math.sin(pit) * along, z + s * fw - c * sd + cp * s * along, yaw, pit);
+    }
+  })();
+  $('breload').onclick = () => go(looking);
+  window.addEventListener('hashchange', () => location.reload());      // another shared link pasted into this tab
+
+  // ---------- the photo: the view alone, every pixel of it, as a PNG ----------
+  let shots = 0, last = null;
+  try { shots = Math.max(0, parseInt(sessionStorage.getItem('bdcb-shots') || '0', 10) || 0); } catch (e) {}
+  const fileOf = s => new File([s.blob], s.name, { type: 'image/png' });
+  const canShare = s => { try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files: [fileOf(s)] })); } catch (e) { return false; } };
+  function photo() {
+    if (!frames || Module.ckFailed || !looking) return;
+    const w = canvas.width, h = canvas.height;
+    canvas.toBlob(blob => {
+      if (!blob) { $('shotmsg').textContent = 'The browser would not make the picture.'; $('shotshare').hidden = $('shotsave').hidden = true; $('shot').hidden = false; return; }
+      shots++; try { sessionStorage.setItem('bdcb-shots', String(shots)); } catch (e) {}
+      last = { blob, name: 'bush-drift-' + BD.slug(piece ? piece.name : '') + '-' + shots + '.png', w, h };
+      window.__ckPhoto = last;
+      $('flash').classList.add('on'); setTimeout(() => $('flash').classList.remove('on'), 60);
+      const share = canShare(last);      // a phone or a tablet can hand the picture straight to another app; a computer saves it
+      $('shotmsg').textContent = share ? 'Photo taken (' + w + ' by ' + h + ').' : 'Saved ' + last.name + ' (' + w + ' by ' + h + ') to your downloads.';
+      $('shotshare').hidden = !share; $('shotsave').hidden = !share; $('shot').hidden = false;
+      if (!share) { BD.download(blob, last.name); clearTimeout(photo.t); photo.t = setTimeout(() => { $('shot').hidden = true; }, 4000); }
+    }, 'image/png');
+    canvas.focus();
+  }
+  $('bphoto').onclick = photo;
+  $('shotsave').onclick = () => { if (last) BD.download(last.blob, last.name); $('shot').hidden = true; canvas.focus(); };
+  $('shotshare').onclick = async () => {
+    if (!last) return;
+    try { await navigator.share({ files: [fileOf(last)], title: BD.TITLE }); $('shot').hidden = true; } catch (e) { if (!e || e.name !== 'AbortError') BD.download(last.blob, last.name); }
+    canvas.focus();
+  };
+  $('shotx').onclick = () => { $('shot').hidden = true; canvas.focus(); };
+  window.__ckShoot = photo;
+
+  var Module = {
+    canvas: canvas, bdH: 0, bdSafe: [0, 0, 0, 0],
+    print: t => console.log(t), printErr: t => console.warn(t),
+    setStatus: t => { if (!Module.ckFailed) status.textContent = t ? 'Loading the creek… ' + t.replace(/^Downloading data\.\.\. ?/, '') : ''; },
+    totalDependencies: 0,
+    monitorRunDependencies: left => { if (!left) Module.setStatus(''); },
+    preRun: [function () {
+      const E = Module.ENV;
+      E.CL_SEQ = '2:drive';                      // straight into a drive: no menu first
+      Module.FS.writeFile('/setpiece.txt', info.text);
+      E.CK_SETPIECE_FILE = '/setpiece.txt';      // this piece only
+      E.CK_SETPIECE_GO = '0';                    // the ute starts just above it
+      E.CL_START_LOW = '1';                      // in Low Range
+      if (look0) {
+        E.CKL_ON = '1';                          // start with the free camera, not driving
+        let p = null; try { p = sessionStorage.getItem(poseKey()); } catch (e) {}
+        if (p && /^(-?[\d.]+,){4}-?[\d.]+$/.test(p)) E.CKL_CAM = p;      // ...from where the camera was before the reload
+      }
+      Object.assign(E, window.__ckTestEnv || {});   // (switches for the checks in test/)
+    }],
+    onAbort: () => fail('The game stopped. Press "Start again".'),
+  };
+  Object.defineProperty(Module, 'bdW', { get() { frames++; return bw; } });
+  Object.defineProperty(Module, 'bdH', { get() { return bh; } });
+  fit();
+  // A message in place of the game. Text only: nothing from a link is ever read as HTML.
+  function fail(msg, links) {
+    Module.ckFailed = 1; status.textContent = '';
+    status.appendChild(BD.el('p', { text: msg }));
+    if (links) status.appendChild(BD.el('p', null, [BD.el('a', { href: '../builder.html', text: 'Build your own' }), ' · ', BD.el('a', { href: 'index.html', text: 'Drive the example piece' }), ' · ', BD.el('a', { href: '../index.html', text: 'What is this?' })]));
+    if (links) { $('keys').hidden = true; $('bkeys').hidden = true; $('breload').hidden = true; }      // nothing to drive: no keys to list, nothing to start again
+    window.__ckFailed = msg;
+  }
+  window.onerror = () => { if (!Module.ckFailed) fail('Something went wrong. Press "Start again".'); };
+
+  // frames a second, as the game draws them
+  let f0 = 0, t0 = performance.now();
+  setInterval(() => {
+    const t = performance.now(), fps = (frames - f0) * 1000 / (t - t0); f0 = frames; t0 = t;
+    if (frames > 0) { $('fps').textContent = Math.round(fps) + ' frames a second'; window.__ckFps = fps; window.__ckFrames = frames; }
+  }, 1000);
+
+  // one of this browser's own pieces: when the builder changes it, the free-camera window follows; a drive is left alone
+  let followT = null;
+  function follow() {
+    if (Module.ckFailed) return;
+    if (look0 || looking) { clearTimeout(followT); followT = setTimeout(() => go(true), 700); }
+    else { $('breload').className = 'newer'; $('breload').textContent = 'Changed in the builder: reload to drive it'; }
+  }
+
+  async function start() {
+    BD.titles('');
+    try { await BD.loadData(); } catch (e) { return fail('The game\'s files could not be loaded. Reload the page to try again.'); }
+    let shared = false;
+    if (code) {
+      try { piece = await BD.decode(code); shared = true; }
+      catch (e) { return fail('That link could not be opened. ' + (e instanceof BD.Bad ? e.message : 'It is damaged.') + ' Ask for it to be sent again, as a whole link.', true); }
+    } else if (ownId) {
+      piece = BD.store.get(ownId);
+      if (!piece) return fail('That piece is not in this browser. Pieces are kept in the browser they were built in; to move one, share its link or save it as a file.', true);
+    } else {
+      try { const r = await fetch('../data/example.json'); if (!r.ok) throw new Error('missing'); piece = BD.check(await r.json()); }
+      catch (e) { return fail('The example piece could not be loaded. Reload the page to try again.', true); }
+    }
+    const own = !!ownId;
+    info = { id: ownId || null, shared, name: piece.name, slot: piece.slot, counts: { objects: piece.objects.length, gates: piece.gates.length }, text: BD.gameText(piece, 'piece'), piece };
+    $('pname').removeAttribute('data-title'); $('pname').textContent = piece.name; $('pname').title = piece.notes || piece.name;
+    $('pinfo').textContent = (shared ? 'Shared with you · ' : '') + BD.placeName(piece.slot) + ' · ' + piece.objects.length + (piece.objects.length === 1 ? ' rock or log, ' : ' rocks and logs, ') + piece.gates.length + (piece.gates.length === 1 ? ' gate' : ' gates');
+    BD.titles(piece.name);
+    if (own) $('back').href = '../builder.html?open=' + encodeURIComponent(ownId);      // back to this piece (a phone drives it in the builder's own tab)
+    $('back').hidden = !own; $('bcopy').hidden = own; $('bown').hidden = own; $('kauto').hidden = !(own && look0);
+    $('bcopy').onclick = () => {      // into this visitor's own builder, as a new piece of theirs
+      try { const p = BD.store.add(piece); location.href = '../builder.html?open=' + encodeURIComponent(p.id); }
+      catch (e) { $('bcopy').textContent = 'This browser would not keep a copy'; }
+    };
+    if (own) window.addEventListener('storage', e => { if (e.key === BD.store.key(ownId) && e.newValue) follow(); });
+    window.__ckInfo = info;
+    window.__ckLook = { id: ownId || null, piece: ownId || null, on: () => looking, pose, set: (x, y, z, yaw, pit) => Module._bd_look_set(x, y, z, yaw, pit) };      // (for the builder's button and the checks in test/)
+    const s = document.createElement('script'); s.src = 'creeklab.js';
+    s.onerror = () => fail('The game\'s files are missing from this site.');
+    document.body.appendChild(s);
+    canvas.focus();
+  }
+  start();
+</script>
+</body>
+</html>

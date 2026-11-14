@@ -1,0 +1,1450 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>Bush Drift</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:14px/1.35 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#23261f;background:#efece4;display:flex;flex-direction:column;overflow:hidden;-webkit-user-select:none;user-select:none}
+input,textarea{-webkit-user-select:text;user-select:text;font:inherit;color:inherit}
+button{font:inherit;color:inherit;background:#fff;border:1px solid #b9b3a3;border-radius:7px;padding:5px 11px;cursor:pointer}
+button:hover{background:#f6f3ea}
+button.primary{background:#2f6b3c;border-color:#2f6b3c;color:#fff;font-weight:600}
+button.primary:hover{background:#285c33}
+button.play{background:#1f5f8b;border-color:#1f5f8b;color:#fff;font-weight:600}
+button.play:hover{background:#1a5179}
+button.danger{color:#a02a1c;border-color:#d3a79f}
+button.on{background:#23261f;color:#fff;border-color:#23261f}
+button:disabled{opacity:.45;cursor:default}
+header{display:flex;align-items:center;gap:9px;padding:8px 12px;background:#fbf9f3;border-bottom:1px solid #d6d0c0}
+header .brand{font-weight:700;white-space:nowrap}
+#name{font-size:16px;font-weight:600;border:1px solid #d6d0c0;border-radius:6px;padding:4px 7px;background:#fff;min-width:120px;width:250px}
+#name:disabled{background:transparent;border-color:transparent}
+#name:focus{border-color:#2f6b3c;outline:none}
+.chip{background:#e7e2d3;border-radius:20px;padding:3px 10px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip.test{background:#dcebdc}.chip.test.failed,.chip.test.stuck{background:#f3dcd6}.chip.test.old{background:#ece6d4}
+.grow{flex:1}
+#state{font-size:13px;color:#4c5246;white-space:nowrap}
+#state.dirty{color:#9a5b00;font-weight:600}#state.bad{color:#a02a1c;font-weight:600}
+#notesbar{display:flex;gap:9px;align-items:center;padding:6px 12px;background:#f6f3ea;border-bottom:1px solid #d6d0c0}
+#notesbar label{font-weight:600;white-space:nowrap;font-size:13px}
+#notes{flex:1;resize:none;height:30px;border:1px solid #cbc5b5;border-radius:6px;padding:4px 8px;background:#fff}
+main{flex:1;display:flex;min-height:0}
+aside{background:#fbf9f3;overflow-y:auto;padding:10px}
+#left{width:268px;flex:none;border-right:1px solid #d6d0c0}
+#right{width:276px;flex:none;border-left:1px solid #d6d0c0}
+#mid{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+#tools{display:flex;align-items:center;gap:7px;padding:6px 10px;background:#f6f3ea;border-bottom:1px solid #d6d0c0;flex-wrap:wrap;font-size:13px}
+#tools .sep{width:1px;height:20px;background:#cbc5b5;margin:0 3px}
+#tools label{display:flex;align-items:center;gap:4px;white-space:nowrap}
+#tools button{padding:3px 9px}
+#where{margin-left:auto;color:#5b6154;font-variant-numeric:tabular-nums;white-space:nowrap}
+#wrap{flex:1;position:relative;min-height:0;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:default}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#6a6f61;margin:12px 0 6px}
+h3:first-child{margin-top:0}
+.item{display:flex;gap:8px;align-items:center;border:1px solid #ddd7c7;border-radius:9px;background:#fff;padding:6px;margin-bottom:6px;cursor:grab;touch-action:none}
+.item:hover{border-color:#2f6b3c;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.item canvas{flex:none;background:#e3d9bd;border-radius:6px}
+.item .meta{min-width:0;display:flex;flex-direction:column;gap:2px}
+.item b{font-size:13.5px}.item span.dim{font-size:12px;color:#5b6154}
+.item small{font-size:11.5px;color:#7a7f70}
+.badge{display:inline-block;font-size:11px;font-weight:600;border-radius:10px;padding:1px 8px;color:#fff;white-space:nowrap;align-self:flex-start}
+.badge.crawl{background:#2f7d4f}.badge.between{background:#c77700}.badge.wall{background:#2b332b}.badge.piece{background:#7a5a3a}
+#panel h2{font-size:17px;margin:0 0 6px}
+#panel .cls{margin-bottom:8px;font-size:13px}
+#panel table{border-collapse:collapse;margin-bottom:8px;width:100%}
+#panel td{padding:2px 0;font-size:13px;vertical-align:top}#panel td:first-child{color:#5b6154;width:92px}
+#panel label.f{display:block;margin:8px 0 0;font-size:13px;color:#5b6154}
+#panel label.f .in{display:flex;align-items:center;gap:6px;color:#23261f;margin-top:2px}
+#panel input[type=number]{width:86px;border:1px solid #cbc5b5;border-radius:6px;padding:4px 6px;background:#fff}
+#panel input[type=range]{width:100%;margin-top:4px}
+#panel small{display:block;color:#5b6154;margin-top:2px}
+#panel .row{display:flex;gap:8px;margin-top:12px}
+#panel .hint{color:#5b6154;font-size:12.5px;margin:10px 0 0}
+#panel .seg{display:flex;gap:4px;margin-top:3px}#panel .seg button{flex:1;padding:4px 2px;font-size:12.5px}
+details{margin-top:14px;border-top:1px solid #d6d0c0;padding-top:10px}
+summary{font-weight:600;cursor:pointer}
+details ul{padding-left:18px;margin:8px 0;font-size:13px}details li{margin-bottom:5px}
+kbd{font:12px ui-monospace,Menlo,monospace;background:#ece8dc;border:1px solid #cfc9b8;border-radius:4px;padding:0 4px}
+.overlay{position:fixed;inset:0;background:rgba(30,32,26,.45);display:flex;align-items:center;justify-content:center;z-index:20}
+#askdlg{z-index:30}
+.hidden{display:none!important}
+.box{background:#fbf9f3;border-radius:12px;padding:18px 20px;box-shadow:0 10px 40px rgba(0,0,0,.3);max-width:94vw;max-height:86vh;overflow:auto}
+.box h2{margin:0 0 8px;font-size:18px}
+.box p{margin:0 0 12px;color:#4c5246}
+.box input[type=text]{width:100%;border:1px solid #b9b3a3;border-radius:7px;padding:7px 9px;margin-bottom:12px;background:#fff;font-size:15px}
+.box .btns{display:flex;gap:8px;justify-content:flex-end}
+.box .err{color:#a02a1c;font-weight:600}
+#listbox{width:1000px}
+#list table{border-collapse:collapse;width:100%}
+#list th{text-align:left;font-size:12px;color:#6a6f61;font-weight:600;padding:4px 8px;border-bottom:1px solid #d6d0c0}
+#list td{padding:7px 8px;border-bottom:1px solid #e6e1d2;vertical-align:middle;font-size:13.5px}
+#list td small{color:#5b6154}
+#list td.act{white-space:nowrap;text-align:right}#list td.act button{padding:3px 8px;margin-left:4px}
+#list tr.cur td{background:#eef3e6}
+#list .t{font-size:12.5px;color:#5b6154}#list .t.passed{color:#2f6b3c;font-weight:600}#list .t.failed,#list .t.stuck{color:#a02a1c;font-weight:600}
+#welcome{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,236,228,.72);z-index:5}
+#welcome .box{text-align:center;max-width:430px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#23261f;color:#fff;padding:9px 16px;border-radius:9px;z-index:40;max-width:80vw}
+header a.brand{color:inherit;text-decoration:none}
+header a.brand:hover{text-decoration:underline}
+#placewrap{display:flex;align-items:center;gap:5px}
+#place{font:inherit;font-weight:600;border:0;background:transparent;color:inherit;cursor:pointer;max-width:170px}
+#small{display:none;gap:10px;align-items:center;padding:6px 12px;background:#fff3cd;border-bottom:1px solid #e0cf9a;font-size:13px}
+#small button{padding:2px 8px}
+@media (max-width:820px),(pointer:coarse){#small{display:flex}}
+#sharelink{font-size:13px!important;font-family:ui-monospace,Menlo,monospace}
+/* the phone builder (html.phone, set in the head): the map fills the screen, fingers do the rest */
+html:not(.phone) .ph{display:none!important}
+html.phone,html.phone body{overscroll-behavior:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+html.phone header,html.phone #notesbar,html.phone #tools,html.phone aside,html.phone #small{display:none!important}
+html.phone button{touch-action:manipulation}
+html.phone #toast{bottom:calc(50px + env(safe-area-inset-bottom));max-width:50vw;font-size:13px}
+html.phone .box input[type=text],html.phone select,html.phone textarea,html.phone #name{font-size:16px}
+html.phone .box{max-height:92vh;padding:14px 16px}
+html.phone .box .btns{flex-wrap:wrap}html.phone .box .btns button{min-height:40px}
+html.phone #listbox{width:640px}
+html.phone #list th:nth-child(2),html.phone #list td:nth-child(2),html.phone #list th:nth-child(3),html.phone #list td:nth-child(3),html.phone #list th:nth-child(5),html.phone #list td:nth-child(5){display:none}
+html.phone #list td.act{white-space:normal}html.phone #list td.act button{min-height:38px;margin:2px 0 2px 4px}
+html.phone #welcome .box{max-width:min(430px,86vw)}html.phone #welcome .btns button{min-height:42px}
+.pbtn{position:fixed;z-index:10;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(251,249,243,.94);border:1px solid #b9b3a3;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.pbtn:disabled{opacity:.4}
+.pbtn svg{width:24px;height:24px;fill:none;stroke:#23261f;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#pmenu{top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right))}
+#pundo{top:max(8px,env(safe-area-inset-top));right:calc(max(8px,env(safe-area-inset-right)) + 52px)}
+#pread{position:fixed;z-index:10;top:calc(max(8px,env(safe-area-inset-top)) + 52px);right:max(8px,env(safe-area-inset-right));max-width:min(270px,36vw);background:rgba(251,249,243,.93);border:1px solid #d6d0c0;border-radius:10px;padding:5px 9px;font-size:12.5px;line-height:1.3;pointer-events:none}
+#pread b{display:block;font-size:13.5px}#pread i{font-style:normal;display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+#pact{position:fixed;z-index:10;right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));display:flex;gap:8px}
+#pact .pbtn{position:static}#pact .pbtn.danger svg{stroke:#a02a1c}
+.pstack{width:52px;flex-direction:column;gap:1px}.pstack svg{width:20px;height:20px}.pstack span{font-size:10.5px;font-weight:600;line-height:1;color:#23261f}
+#pmeasure{width:auto;padding:0 12px;font-weight:600;color:#c2185b}
+#ploose{width:auto;padding:0 12px;font-weight:600;color:#23261f}#ploose.on{background:#2f6b3a;border-color:#2f6b3a;color:#fff}
+#ptab{position:fixed;z-index:11;left:50%;bottom:0;transform:translateX(-50%);width:96px;height:42px;padding:0;border:0;background:transparent;display:flex;align-items:flex-end;justify-content:center}
+#ptab span{display:flex;align-items:center;justify-content:center;width:88px;height:calc(28px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);border-radius:13px 13px 0 0;background:rgba(251,249,243,.96);border:1px solid #b9b3a3;border-bottom:0;box-shadow:0 -1px 5px rgba(0,0,0,.16)}
+#ptab svg{width:22px;height:14px;fill:none;stroke:#23261f;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+#pbar{position:fixed;z-index:12;left:0;right:0;bottom:0;background:rgba(251,249,243,.97);border-top:1px solid #b9b3a3;box-shadow:0 -2px 10px rgba(0,0,0,.2);transform:translateY(110%);transition:transform .2s;padding:8px max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+#pbar.open{transform:none}
+#prow{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior:contain;scrollbar-width:none}
+#prow::-webkit-scrollbar{display:none}
+.ptile{flex:none;width:76px;height:56px;padding:0;border-radius:9px;background:#e3d9bd;border:1px solid #d3cbb2;touch-action:pan-x}
+.ptile:active{border-color:#2f6b3c}
+.ptile canvas{display:block;width:74px;height:54px;pointer-events:none}
+#pmenuw{position:fixed;inset:0;z-index:15;background:rgba(30,32,26,.35)}
+#psheet{position:absolute;top:0;right:0;bottom:0;width:min(380px,94vw);background:#fbf9f3;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;box-shadow:-4px 0 20px rgba(0,0,0,.25);padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) 14px}
+#psheet .r{display:flex;gap:8px;margin:8px 0;align-items:center}
+#psheet .r>*{flex:1}
+#psheet button{min-height:42px;padding:5px 8px}
+#psheet .lab{display:block;font-weight:600;font-size:13px;margin:10px 0 4px}
+#psheet #name{width:100%;min-width:0;padding:6px 8px}
+#psheet #notes{display:block;width:100%;height:62px;resize:none;border:1px solid #cbc5b5;border-radius:6px;padding:6px 8px;background:#fff}
+#psheet #placewrap{font-size:14px;padding:8px 12px;justify-content:space-between}
+#psheet #place{max-width:none;font-size:16px}
+#psheet label.tog{display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;border:1px solid #b9b3a3;border-radius:7px;background:#fff}
+#psheet label.tog input{width:20px;height:20px;margin:0}
+#psheet #state{display:block;margin:6px 0 2px;white-space:normal}
+#psheet details{margin-top:10px}#psheet summary{min-height:36px;display:flex;align-items:center}
+#psheet .top{display:flex;align-items:center;gap:8px}#psheet .top b{flex:1;font-size:15px}
+#psheet .top button{flex:none;min-width:44px;padding:5px 12px}
+#turn{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px;background:#efece4}
+#turn svg{width:120px;height:120px;fill:none;stroke:#2f6b3c;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+#turn h2{margin:6px 0 0;font-size:22px}#turn p{margin:0;color:#4c5246;max-width:300px}
+@media (orientation:portrait){#turn{display:flex}html.phone .ph:not(#turn){display:none!important}}
+</style>
+<script>
+// a phone (a touch screen with a short side of 600 px or less) gets the phone builder: decided here, before anything is drawn
+(function () { const m = window.matchMedia; if (!(m && m('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 600)) return;
+  document.documentElement.classList.add('phone');
+  document.querySelector('meta[name=viewport]').setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'); })();
+</script>
+</head>
+<body>
+<div id="small"><span>The builder is best on a computer, with a mouse and a keyboard. On a phone or tablet it works with fingers instead.</span><button id="smallx">OK</button></div>
+<header>
+  <a class="brand" href="index.html" data-title title="Back to the front page">Bush Drift</a>
+  <input id="name" type="text" maxlength="80" placeholder="Name of this piece" title="Click to change the name" disabled>
+  <label id="placewrap" class="chip hidden" title="The stretch of creek this piece sits on. Changing it keeps the rocks where they are and swaps the ground under them.">Location <select id="place"></select></label>
+  <span class="grow"></span>
+  <span id="state"></span>
+  <button id="bplay" class="play" disabled title="Opens the game in a new tab with the ute just above your piece, ready to drive">&#9654; Drive it</button>
+  <button id="blook" class="play" disabled title="Opens the real thing in 3D in its own window (or brings that window back). Leave it open beside the builder: it follows your changes, with the camera where you left it. It is also where you take photos.">Look around in 3D</button>
+  <button id="bshare" class="primary" disabled title="Makes a link with the whole piece inside it, to send to a mate">Share</button>
+  <button id="bnew">New</button>
+  <button id="bopen" title="The pieces kept in this browser: open, rename, duplicate, delete, save as a file, open a file">My pieces</button>
+</header>
+<div id="notesbar">
+  <label for="notes">What should the driver have to do?</label>
+  <textarea id="notes" maxlength="4000" placeholder="For example: squeeze between the two big rocks, then climb the slab to reach the blue gate" disabled></textarea>
+</div>
+<main>
+  <aside id="left"><div id="palette"></div></aside>
+  <section id="mid">
+    <div id="tools">
+      <button id="zout" title="Zoom out">&minus;</button><button id="zfit" title="Show the whole stretch">Fit</button><button id="zin" title="Zoom in">+</button>
+      <span class="sep"></span>
+      <button id="bundo" title="Undo (Ctrl+Z, or Cmd+Z on a Mac)">Undo</button><button id="bredo" title="Redo (Ctrl+Y, or Shift+Cmd+Z on a Mac)">Redo</button>
+      <span class="sep"></span>
+      <button id="bmeasure" title="Click two points to measure between them. Esc clears.">Measure</button>
+      <label><input id="cute" type="checkbox"> Show ute</label>
+      <label><input id="csnap" type="checkbox"> Snap to 10 cm</label>
+      <span id="where"></span>
+    </div>
+    <div id="wrap">
+      <canvas id="cv"></canvas>
+      <div id="welcome" class="hidden"><div class="box">
+        <h2>Build a creek obstacle</h2>
+        <p>Put rocks, logs and gates on a stretch of creek, then drive it, take photos of the ute on it and send it to your mates.</p>
+        <p class="ph" style="font-size:13px;margin-top:-4px"><b>With fingers:</b> tap the tab at the bottom to add a rock, log or gate. Drag to move it, drag round its ring to turn it, pinch to resize it. Tap empty creek to let go, then pinch to zoom the map. The menu at the top right has the rest, with a full how-to.</p>
+        <div class="btns" style="justify-content:center;flex-wrap:wrap"><button id="wnew" class="primary">Start a new piece</button><button id="wexample">Start from the example</button><button id="wopen">My pieces</button></div>
+      </div></div>
+    </div>
+  </section>
+  <aside id="right">
+    <div id="panel"></div>
+    <details id="help">
+      <summary>How to use this</summary>
+      <ul>
+        <li>This is a plan from above with heights marked. <b>Look around in 3D</b> opens the real thing in its own window; keep it open beside this one and it follows your changes.</li>
+        <li>The ute travels left to right. The top of the picture is the driver's left.</li>
+        <li><b>Add:</b> click a rock, log or gate on the left, or drag it onto the creek.</li>
+        <li><b>Move:</b> drag it. Arrow keys nudge 5 cm (hold Shift for 50 cm).</li>
+        <li><b>Turn:</b> drag the round handle, or press <kbd>R</kbd> / <kbd>Shift</kbd>+<kbd>R</kbd> (hold Alt for 1 degree steps).</li>
+        <li><b>Resize:</b> use the Size slider on the right. The height changes with it.</li>
+        <li><b>Stack:</b> put one thing over another, select it and press <b>Bring forward</b> (<kbd>]</kbd>). It then rests on what is under it, lifted and leaning to suit, and its label shows how high its top ends up. <b>Send back</b> (<kbd>[</kbd>) puts it underneath again. Things at the same level stand through each other.</li>
+        <li><b>Remove:</b> <kbd>Delete</kbd>. <b>Copy:</b> <kbd>Ctrl</kbd>+<kbd>D</kbd>. <b>Undo:</b> <kbd>Ctrl</kbd>+<kbd>Z</kbd>. (On a Mac, <kbd>Cmd</kbd> for <kbd>Ctrl</kbd>.)</li>
+        <li><b>Slide the view:</b> two fingers on a trackpad slide it and a pinch zooms. With a mouse, the wheel zooms and dragging empty creek slides the view.</li>
+        <li><b>Colours:</b> pale rock a tyre can climb, orange-brown is too tall to climb square on, dark mossy rock is a wall.</li>
+        <li><b>Gates</b> are what the driver aims for: green is the easy one, blue is harder, black is the hard one.</li>
+        <li><b>Show ute</b> puts a true-size outline of the ute on the creek so you can judge gaps. Drag and turn it like a rock.</li>
+        <li><b>Measure:</b> press Measure, click two points. <kbd>Esc</kbd> clears it.</li>
+        <li><b>Location</b> (at the top) picks which stretch of creek the piece sits on.</li>
+        <li>Your work is kept in this browser as you go. <b>My pieces</b> can save one as a small file, as a backup or to move it to another computer. <b>Share</b> makes a link with the whole piece in it.</li>
+      </ul>
+    </details>
+  </aside>
+</main>
+<div id="listdlg" class="overlay hidden"><div class="box" id="listbox">
+  <h2>My pieces</h2>
+  <p id="listmsg"></p>
+  <div id="list"></div>
+  <div class="btns" style="margin-top:14px"><button id="listnew">New piece</button><button id="listfile" title="Opens a piece that was saved as a file">Open a file</button><button id="listclose">Close</button></div>
+  <input id="filein" type="file" accept=".json,application/json" class="hidden">
+</div></div>
+<div id="sharedlg" class="overlay hidden"><div class="box" style="width:600px">
+  <h2>Share this piece</h2>
+  <p>The whole piece is inside this link. Anyone who opens it can drive it, take photos and make their own copy to change. Nothing is sent anywhere else.</p>
+  <input id="sharelink" type="text" readonly>
+  <p id="shareinfo"></p>
+  <div class="btns"><button id="sharefile">Save as a file instead</button><button id="shareclose">Close</button><button id="sharecopy" class="primary">Copy the link</button></div>
+</div></div>
+<div id="askdlg" class="overlay hidden"><div class="box" style="width:440px">
+  <h2 id="asktitle"></h2><p id="asktext"></p>
+  <input id="askinput" type="text" maxlength="80">
+  <div class="btns"><button id="askcancel">Cancel</button><button id="askok" class="primary">OK</button></div>
+</div></div>
+<div id="toast" class="hidden"></div>
+<div id="pui" class="ph">
+  <button id="pundo" class="pbtn" aria-label="Undo" disabled><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+  <button id="pmenu" class="pbtn" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <div id="pread" class="hidden"></div>
+  <div id="pact">
+    <button id="pmeasure" class="pbtn hidden">Stop measuring</button>
+    <button id="ploose" class="pbtn hidden" aria-label="Loose log" aria-pressed="false">Loose</button>
+    <button id="pback" class="pbtn pstack" aria-label="Send back"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="12" height="12" rx="2" fill="#23261f"/><rect x="9" y="3" width="12" height="12" rx="2" fill="#fbf9f3"/></svg><span>Under</span></button>
+    <button id="pfwd" class="pbtn pstack" aria-label="Bring forward"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="12" height="12" rx="2" fill="#fbf9f3"/><rect x="9" y="3" width="12" height="12" rx="2" fill="#23261f"/></svg><span>On top</span></button>
+    <button id="pcopy" class="pbtn" aria-label="Copy"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></svg></button>
+    <button id="pdel" class="pbtn danger" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 7V4.5h4V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg></button>
+  </div>
+  <button id="ptab" aria-label="Rocks, logs and gates"><span><svg viewBox="0 0 22 14"><path d="M3 11 11 4l8 7"/></svg></span></button>
+  <div id="pbar"><div id="prow"></div></div>
+</div>
+<div id="pmenuw" class="ph hidden"><div id="psheet">
+  <div class="top"><b data-title>Bush Drift</b><button id="pmredo">Redo</button><button id="pmclose" aria-label="Close">&times;</button></div>
+  <span id="pstate"></span>
+  <label class="lab" for="name">Name</label><span id="pname"></span>
+  <label class="lab" for="notes">What should the driver have to do?</label><span id="pnotes"></span>
+  <div class="r" id="pplace"></div>
+  <div class="r"><button id="pmplay" class="play">&#9654; Drive it</button><button id="pmshare" class="primary">Share</button></div>
+  <div class="r"><button id="pmfit">Fit</button><span id="pute"></span><button id="pmmeasure">Measure</button></div>
+  <div class="r"><button id="pmnew">New</button><button id="pmopen">My pieces</button><button id="pmfs">Full screen</button></div>
+  <details id="phelp"><summary>How to use this</summary><ul>
+    <li><b>Add:</b> tap the tab at the bottom, then tap a rock, log or gate. It lands in the middle of the screen. Slide the row sideways for more.</li>
+    <li><b>Select:</b> tap it. Tap empty creek to let go. Where things overlap, tap the selected one again to pick the one beneath it.</li>
+    <li><b>Move:</b> drag it with one finger.</li>
+    <li><b>Turn:</b> drag round the faint ring around it.</li>
+    <li><b>Resize:</b> pinch it while it is selected. For a gate, the pinch changes the gap between the poles.</li>
+    <li><b>Look about:</b> drag empty creek to slide the map. With nothing selected, pinch to zoom. Two fingers moving together slide the map.</li>
+    <li><b>Stack:</b> put one thing over another, select it and press <b>On top</b>. It then rests on what is under it. <b>Under</b> puts it underneath again.</li>
+    <li>The buttons in the corner delete and copy the selected thing, and put it on top of or under what it overlaps. The arrow at the top undoes.</li>
+    <li>With a log selected, Loose makes it a log the ute can push, roll and drive over. Tap it again to fix the log down.</li>
+    <li>The ute travels left to right. The top of the map is the driver's left.</li>
+    <li><b>Colours:</b> pale rock a tyre can climb, orange-brown is too tall to climb square on, dark mossy rock is a wall.</li>
+    <li><b>Gates</b> are what the driver aims for: green is the easy one, blue is harder, black is the hard one.</li>
+    <li>Your work is kept in this browser as you go. <b>Share</b> sends the whole piece as a link.</li>
+  </ul></details>
+</div></div>
+<div id="turn" class="ph"><svg viewBox="0 0 120 120"><rect x="44" y="18" width="32" height="56" rx="6"/><rect x="32" y="74" width="56" height="32" rx="6" stroke-dasharray="5 5"/><path d="M90 40a34 34 0 0 1 4 30m-8-4 8 5 4-9"/></svg><h2>Turn your phone sideways</h2><p>The builder needs the whole width of the screen.</p></div>
+<script src="js/common.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const RAD = Math.PI / 180;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const r2 = v => Math.round(v * 100) / 100, r1 = v => Math.round(v * 10) / 10;
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const m2 = v => (Math.round(v * 100) / 100).toFixed(2);
+const m1 = v => (Math.round(v * 10) / 10).toFixed(1);
+const normYaw = y => { y = ((y + 180) % 360 + 360) % 360 - 180; if (y === -180) y = 180; return r1(y); };
+const FONT = '-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif';
+
+const DEFAULT_SLOT = 0;      // the stretch of creek a new piece starts on
+const PHONE = document.documentElement.classList.contains('phone');      // the phone builder (see the end)
+
+// ---------- state ----------
+let A = null, CV = null, RULES = {climb_max: 0.4, wall_min: 0.7, text: {}}, assetById = {};
+let doc = null, savedSerial = '', spot = null, terrain = null, bedPath = null;
+let sel = null;                       // {t:'o'|'g'|'u', i}
+let undoStack = [], redoStack = [], lastSnap = '';
+let saveFailed = false, saveTimer = null, lastUte = null;
+const view = {ds0: -3, offTop: 11, z: 18};
+let W = 800, H = 500, DPR = 1, needDraw = true;
+let drag = null, ghost = null, spaceDown = false;
+const measure = {on: false, a: null, b: null, h: null};
+const cv = $('cv'); let ctx = cv.getContext('2d');
+
+const CLS_WORD = {crawl: 'climbable', between: 'awkward', wall: 'wall', piece: 'fixed piece'};
+const CLS_TEXT = {crawl: 'A tyre can climb it', between: 'Too tall to climb square on, too low to be a wall', wall: 'Wall: too tall to climb, go around'};
+const CLS_COL = {crawl: '#2f7d4f', between: '#c77700', wall: '#2b332b', piece: '#7a5a3a'};
+const LOOKS = {
+  crawl: {lo: [170, 146, 112], hi: [240, 228, 204], edge: '#57432c'},
+  between: {lo: [146, 98, 56], hi: [226, 172, 110], edge: '#57310f'},
+  wall: {lo: [40, 52, 40], hi: [112, 126, 98], edge: '#0f160e'},
+  piece: {lo: [104, 72, 44], hi: [182, 140, 94], edge: '#34210f'}
+};
+const GATE_COL = {green: '#1f9d3a', blue: '#1c5fd1', black: '#111111'};
+const GATE_SHAPE = {green: 'circle', blue: 'square', black: 'diamond'};
+
+function classOf(a, scale, top) {      // (top: a stacked thing's own top above the creek bed, when it rests on others)
+  if (a.fixed_class) return 'piece';
+  const h = top != null ? top : a.height * scale;
+  return h <= RULES.climb_max + 1e-9 ? 'crawl' : h >= RULES.wall_min - 1e-9 ? 'wall' : 'between';
+}
+function classText(a, k) {
+  if (k === 'piece') return a.note || 'A fixed piece';
+  return (RULES.text && RULES.text[k]) || CLS_TEXT[k];
+}
+
+// ---------- assets: footprint and shaded bitmaps ----------
+function prepAsset(a) {
+  const g = a.grid; let i0 = g.nx, i1 = -1, j0 = g.nz, j1 = -1, hm = 1;
+  for (let j = 0; j < g.nz; j++) for (let i = 0; i < g.nx; i++) {
+    const h = g.h[j * g.nx + i]; if (h < 0) continue;
+    if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j; if (h > hm) hm = h;
+  }
+  if (i1 < 0) { i0 = 0; i1 = g.nx - 1; j0 = 0; j1 = g.nz - 1; }
+  a._hm = hm;
+  a._bx0 = g.x0 + i0 * g.cell; a._bx1 = g.x0 + (i1 + 1) * g.cell;
+  a._bz0 = g.z0 + j0 * g.cell; a._bz1 = g.z0 + (j1 + 1) * g.cell;
+  a._len = a._bx1 - a._bx0; a._wid = a._bz1 - a._bz0;
+  a._cx = (a._bx0 + a._bx1) / 2; a._cz = (a._bz0 + a._bz1) / 2;
+  a._bm = {};
+  if (!a.scale) a.scale = {min: 1, max: 1, def: 1};
+  if (a.height == null) a.height = hm / 100;
+}
+function bitmap(a, look) {
+  if (a._bm[look]) return a._bm[look];
+  const g = a.grid, nx = g.nx, nz = g.nz, K = Math.max(1, Math.min(4, Math.floor(1400 / Math.max(nx, nz))));
+  const small = document.createElement('canvas'); small.width = nx; small.height = nz;
+  const sc = small.getContext('2d'), img = sc.createImageData(nx, nz), d = img.data, L = LOOKS[look], hm = a._hm;
+  const at = (i, j) => (i < 0 || j < 0 || i >= nx || j >= nz) ? 0 : Math.max(0, g.h[j * nx + i]);
+  const mask = new Path2D(), edge = new Path2D();
+  for (let j = 0; j < nz; j++) {
+    let run = -1;
+    for (let i = 0; i <= nx; i++) {
+      const h = i < nx ? g.h[j * nx + i] : -1;
+      if (h >= 0) {
+        if (run < 0) run = i;
+        const t = Math.pow(h / hm, 0.8);
+        const slope = ((at(i + 1, j) - at(i - 1, j)) - (at(i, j + 1) - at(i, j - 1))) / (2 * g.cell * 100);
+        const sh = 1 + clamp(slope * 0.16, -0.24, 0.2), p = (j * nx + i) * 4;
+        for (let c = 0; c < 3; c++) d[p + c] = clamp((L.lo[c] + (L.hi[c] - L.lo[c]) * t) * sh, 0, 255);
+        d[p + 3] = 255;
+        if (i === 0 || g.h[j * nx + i - 1] < 0) { edge.moveTo(i, j); edge.lineTo(i, j + 1); }
+        if (i === nx - 1 || g.h[j * nx + i + 1] < 0) { edge.moveTo(i + 1, j); edge.lineTo(i + 1, j + 1); }
+        if (j === 0 || g.h[(j - 1) * nx + i] < 0) { edge.moveTo(i, j); edge.lineTo(i + 1, j); }
+        if (j === nz - 1 || g.h[(j + 1) * nx + i] < 0) { edge.moveTo(i, j + 1); edge.lineTo(i + 1, j + 1); }
+      } else if (run >= 0) { mask.rect(run, j, i - run, 1); run = -1; }
+    }
+  }
+  sc.putImageData(img, 0, 0);
+  const big = document.createElement('canvas'); big.width = nx * K; big.height = nz * K;
+  const b = big.getContext('2d');
+  b.imageSmoothingEnabled = false; b.drawImage(small, 0, 0, nx * K, nz * K);
+  b.save(); b.scale(K, K); b.clip(mask); b.imageSmoothingEnabled = true; b.imageSmoothingQuality = 'high';
+  b.drawImage(small, 0, 0, nx, nz); b.restore();
+  b.save(); b.scale(K, K); b.strokeStyle = L.edge; b.lineWidth = 0.7; b.lineCap = 'square'; b.stroke(edge); b.restore();
+  return (a._bm[look] = big);
+}
+
+// ---------- the creek stretch ----------
+function hAt(s, ds, off) {
+  const rows = s.rows, offs = s.offs, n = rows.length, M = offs.length;
+  const fk = clamp(ds - rows[0].ds, 0, n - 1), k = Math.max(0, Math.min(n - 2, Math.floor(fk))), tk = fk - k;
+  const step = (offs[M - 1] - offs[0]) / (M - 1), fm = clamp((off - offs[0]) / step, 0, M - 1), m = Math.max(0, Math.min(M - 2, Math.floor(fm))), tm = fm - m;
+  const a = rows[k].h, b = rows[Math.min(n - 1, k + 1)].h;
+  return (a[m] * (1 - tm) + a[m + 1] * tm) * (1 - tk) + (b[m] * (1 - tm) + b[m + 1] * tm) * tk;
+}
+function buildTerrain(s) {
+  const PX = 16, L = s.length, o0 = s.offs[0], o1 = s.offs[s.offs.length - 1], rise = s.bed_rise == null ? 0.35 : s.bed_rise;
+  const w = Math.max(2, Math.round(L * PX)), h = Math.max(2, Math.round((o1 - o0) * PX));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'), img = x.createImageData(w, h), d = img.data;
+  for (let py = 0; py < h; py++) for (let px = 0; px < w; px++) {
+    const ds = (px + .5) / PX, off = o1 - (py + .5) / PX, v = hAt(s, ds, off), p = (py * w + px) * 4;
+    const n = ((px * 7919 + py * 104729) % 13) - 6;
+    let r, g, b;
+    if (v <= rise) { const t = v / Math.max(rise, .01); r = 222 - 26 * t + n * .5; g = 207 - 28 * t + n * .5; b = 168 - 30 * t + n * .5; }
+    else { const t = Math.min(1, (v - rise) / 1.8); r = 150 - 86 * t + n * .4; g = 158 - 62 * t + n * .4; b = 100 - 46 * t + n * .4; }
+    d[p] = r; d[p + 1] = g; d[p + 2] = b; d[p + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  // bed edge: where the ground crosses bed_rise
+  const path = new Path2D(), rows = s.rows, offs = s.offs;
+  const cross = (x1, y1, v1, x2, y2, v2, out) => { if ((v1 > 0) !== (v2 > 0)) { const t = v1 / (v1 - v2); out.push([x1 + (x2 - x1) * t, y1 + (y2 - y1) * t]); } };
+  for (let k = 0; k < rows.length - 1; k++) for (let m = 0; m < offs.length - 1; m++) {
+    const x1 = rows[k].ds, x2 = rows[k + 1].ds, y1 = offs[m], y2 = offs[m + 1];
+    const a = rows[k].h[m] - rise, b = rows[k + 1].h[m] - rise, cc = rows[k + 1].h[m + 1] - rise, dd = rows[k].h[m + 1] - rise, pts = [];
+    cross(x1, y1, a, x2, y1, b, pts); cross(x2, y1, b, x2, y2, cc, pts); cross(x2, y2, cc, x1, y2, dd, pts); cross(x1, y2, dd, x1, y1, a, pts);
+    for (let q = 0; q + 1 < pts.length; q += 2) { path.moveTo(pts[q][0], pts[q][1]); path.lineTo(pts[q + 1][0], pts[q + 1][1]); }
+  }
+  terrain = c; bedPath = path;
+}
+const offMin = () => spot ? spot.offs[0] : -9, offMax = () => spot ? spot.offs[spot.offs.length - 1] : 9, len = () => spot ? spot.length : 60;
+const spotName = slot => BD.placeName(slot);
+function setSpot(slot) {
+  const sp = CV.spots || [];
+  let s = sp.find(q => q.slot === slot);
+  if (!s) { s = sp[0]; if (doc) toast('The stretch of creek for this piece is missing, so it is shown on another one.'); }
+  if (s !== spot) { spot = s; if (s) { if (s.offs[0] > s.offs[s.offs.length - 1]) { s.offs.reverse(); s.rows.forEach(r => r.h.reverse()); } buildTerrain(s); } }
+}
+
+// ---------- stacking: what an upper thing rests on (the game works out the same thing when it builds the piece) ----------
+// A thing with an order above the ones it overlaps is lifted until it touches what is under it (the creek bed or lower things)
+// and leant to match. Logs and fallen trees lean along their length only; rocks lean both ways. Equal orders stand through
+// each other. This is the page's own estimate from its 6 cm height grids; the game uses its 3 cm ones, so expect a few cm between them.
+const LEAN = 0.7;
+const ordOf = o => o.order > 0 ? o.order : 0;
+const scMin = o => o.loose ? Math.min(assetById[o.asset].scale.min, BD.LOOSE_MIN) : assetById[o.asset].scale.min;      // a loose log can go smaller
+function toggleLoose(on) {      // a small log, loose (the ute can push it, roll it and run over it) or fixed
+  const it = selItem(); if (!it || sel.t !== 'o' || !BD.canLoose(it.asset)) return;
+  if (on == null) on = !it.loose;
+  if (on && !it.loose && doc.objects.filter(o => o.loose).length >= BD.MAX_LOOSE) { toast('A piece can hold up to ' + BD.MAX_LOOSE + ' loose logs.'); panelKey = ''; renderPanel(); return; }
+  if (on) it.loose = true; else { delete it.loose; it.scale = Math.max(it.scale, scMin(it)); }
+  panelKey = ''; commit();
+}
+const drawOrder = () => doc.objects.map((o, i) => i).sort((a, b) => ordOf(doc.objects[a]) - ordOf(doc.objects[b]) || a - b);
+const reachOf = (a, s) => Math.hypot(Math.max(Math.abs(a._bx0), Math.abs(a._bx1)), Math.max(Math.abs(a._bz0), Math.abs(a._bz1))) * s;
+function gridH(a, mx, mz) { const g = a.grid, i = Math.floor((mx - g.x0) / g.cell), j = Math.floor((mz - g.z0) / g.cell); return (i < 0 || j < 0 || i >= g.nx || j >= g.nz) ? -1 : g.h[j * g.nx + i]; }
+function topAt(q, R, ds, off) {      // the top of thing q at a point (metres, the creek bed's own heights); -1e9 off its footprint
+  const m = toModel(q, ds, off, q.scale), h = gridH(assetById[q.asset], m[0], m[1]);
+  return h < 0 ? -1e9 : R.gy + h / 100 * q.scale + R.ax * (ds - q.ds) + R.az * (off - q.off);
+}
+const restCache = new WeakMap();
+function restOne(o, a, lows, base) {
+  const g = a.grid, s = o.scale, isLog = /^log/.test(o.asset), one = isLog || /^tree/.test(o.asset), rad = isLog ? s * (o.asset === 'log1' ? 0.16 : 0.2) : 0;
+  let step = 1; while (Math.ceil(g.nx / step) * Math.ceil(g.nz / step) > 700) step++;
+  const P = []; let over = false, mx = 0, mz = 0;
+  for (let j = 0; j < g.nz; j += step) for (let i = 0; i < g.nx; i += step) {
+    const h = g.h[j * g.nx + i]; if (h < 0) continue;
+    const w = toWorld(o, g.x0 + (i + .5) * g.cell, g.z0 + (j + .5) * g.cell, s), top = h / 100 * s;
+    let sup = hAt(spot, w[0], w[1]), by = -1;
+    for (const L of lows) { const t = topAt(L.q, L.R, w[0], w[1]); if (t > sup) { sup = t; by = L.i; over = true; } }
+    const under = isLog ? clamp(2 * rad - top, 0, top) : 0;      // (a log's round belly)
+    P.push([w[0] - o.ds, w[1] - o.off, sup - under, top, by]); mx += w[0] - o.ds; mz += w[1] - o.off;
+  }
+  const n = P.length; if (!over || n < 3) return base;
+  mx /= n; mz /= n;
+  const c = Math.cos(o.yaw * RAD), sn = Math.sin(o.yaw * RAD), A1 = new Float64Array(n), A2 = new Float64Array(n), G = new Float64Array(n);
+  for (let i = 0; i < n; i++) { const dx = P[i][0] - mx, dz = P[i][1] - mz; A1[i] = dx * c + dz * sn; A2[i] = -dx * sn + dz * c; G[i] = P[i][2]; }
+  const fit1 = (t, u) => { let m = -1e9; for (let i = 0; i < n; i++) { const v = G[i] - t * A1[i] - u * A2[i]; if (v > m) m = v; } return m + 0.02 * (t * t + u * u); };
+  const fitU = t => { if (one) return [fit1(t, 0), 0]; let lo = -LEAN, hi = LEAN;
+    for (let k = 0; k < 24; k++) { const x = lo + (hi - lo) / 3, y = hi - (hi - lo) / 3; if (fit1(t, x) < fit1(t, y)) hi = y; else lo = x; }
+    const u = (lo + hi) / 2; return [fit1(t, u), u]; };
+  let lo = -LEAN, hi = LEAN;
+  for (let k = 0; k < 28; k++) { const x = lo + (hi - lo) / 3, y = hi - (hi - lo) / 3; if (fitU(x)[0] < fitU(y)[0]) hi = y; else lo = x; }
+  let t = (lo + hi) / 2, u = fitU(t)[1]; if (Math.abs(t) < 0.004) t = 0; if (Math.abs(u) < 0.004) u = 0;
+  const d = fit1(t, u) - 0.02 * (t * t + u * u), ax = t * c - u * sn, az = t * sn + u * c, gy = d - ax * mx - az * mz;
+  let top = -1e9; const on = [];
+  for (let i = 0; i < n; i++) { const q = P[i]; top = Math.max(top, gy + q[3] + ax * q[0] + az * q[1] - base.gy);
+    if (q[4] >= 0 && !on.includes(q[4]) && gy + ax * q[0] + az * q[1] - q[2] < 0.03) on.push(q[4]); }
+  return {gy, ax, az, lift: gy - base.gy, top, on, stacked: true, along: Math.atan(t) / RAD, across: Math.atan(u) / RAD};
+}
+function restAll() {      // for each rock or log: where it ends up (stacked: true when it rests on something lower)
+  const O = doc.objects, R = new Array(O.length), seq = drawOrder();
+  for (const k of seq) {
+    const o = O[k], a = assetById[o.asset], base = {gy: spot ? hAt(spot, o.ds, o.off) : 0, ax: 0, az: 0, lift: 0, top: a.height * o.scale, on: [], stacked: false, along: 0, across: 0};
+    R[k] = base;
+    if (!(ordOf(o) > 0) || !spot) continue;
+    const rk = reachOf(a, o.scale), lows = [];
+    for (const j of seq) { const q = O[j]; if (j === k || ordOf(q) >= ordOf(o)) continue; if (Math.hypot(q.ds - o.ds, q.off - o.off) <= rk + reachOf(assetById[q.asset], q.scale)) lows.push({q, R: R[j], i: j}); }
+    if (!lows.length) continue;
+    const key = JSON.stringify([o.asset, o.ds, o.off, o.yaw, o.scale, spot.slot, lows.map(L => [L.i, L.q.asset, L.q.ds, L.q.off, L.q.yaw, L.q.scale, L.R.gy, L.R.ax, L.R.az])]), c = restCache.get(o);
+    if (c && c.key === key) { R[k] = c.R; continue; }
+    R[k] = restOne(o, a, lows, base); restCache.set(o, {key, R: R[k]});
+  }
+  return R;
+}
+function overlapping(i) {      // the other rocks and logs whose footprints touch this one's
+  const o = doc.objects[i], a = assetById[o.asset], g = a.grid, out = [];
+  let step = 1; while (Math.ceil(g.nx / step) * Math.ceil(g.nz / step) > 1500) step++;
+  doc.objects.forEach((q, j) => {
+    if (j === i) return; const b = assetById[q.asset]; if (Math.hypot(q.ds - o.ds, q.off - o.off) > reachOf(a, o.scale) + reachOf(b, q.scale)) return;
+    for (let jj = 0; jj < g.nz; jj += step) for (let ii = 0; ii < g.nx; ii += step) {
+      if (g.h[jj * g.nx + ii] < 0) continue;
+      const w = toWorld(o, g.x0 + (ii + .5) * g.cell, g.z0 + (jj + .5) * g.cell, o.scale), m = toModel(q, w[0], w[1], q.scale);
+      if (gridH(b, m[0], m[1]) >= 0) { out.push(j); return; }
+    }
+  });
+  return out;
+}
+function reorder(dir) {      // Bring forward (1): above everything it overlaps. Send back (-1): under it all.
+  if (!doc || !sel || sel.t !== 'o') return;
+  const o = doc.objects[sel.i], ov = overlapping(sel.i).map(j => ordOf(doc.objects[j])), cur = ordOf(o);
+  if (!ov.length) return toast('It is not over or under anything yet. Move it so it overlaps a rock or log first.');
+  let nw;
+  if (dir > 0) { const top = Math.max(...ov); if (cur > top) return toast('It is already on top of everything it overlaps.'); nw = Math.min(99, top + 1); }
+  else { const low = Math.min(...ov); if (cur === 0) return toast('It is already at the bottom, on the creek bed. To put it under something, select that thing and press Bring forward.');
+    if (cur < low) return toast('It is already under everything it overlaps.'); nw = Math.max(0, low - 1);
+    if (nw === 0 && low === 0) toast('It is back on the creek bed, standing through the other bottom things. To put it under one of them, select that one and press Bring forward.'); }
+  if (nw > 0) o.order = nw; else delete o.order;
+  commit();
+}
+
+// ---------- view ----------
+const sx = ds => (ds - view.ds0) * view.z, sy = off => (view.offTop - off) * view.z;
+const wds = x => view.ds0 + x / view.z, woff = y => view.offTop - y / view.z;
+function fit() {
+  const L = len(), R = offMax() - offMin();
+  view.z = clamp(Math.min((W - 50) / (L + 2), (H - 120) / (R + 1)), 4, 160);
+  view.ds0 = L / 2 - W / 2 / view.z; view.offTop = (offMax() + offMin()) / 2 + (H / 2 + 6) / view.z;
+  redraw();
+}
+function zoomAt(x, y, z) {
+  z = clamp(z, 4, 160); const ds = wds(x), off = woff(y);
+  view.z = z; view.ds0 = ds - x / z; view.offTop = off + y / z; redraw();
+}
+function zoomBy(f) { zoomAt(W / 2, H / 2, view.z * f); }
+function resize() {
+  const r = $('wrap').getBoundingClientRect(); W = Math.max(50, r.width); H = Math.max(50, r.height); DPR = window.devicePixelRatio || 1;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); redraw();
+}
+function redraw() { needDraw = true; }
+
+// ---------- geometry helpers ----------
+function toModel(o, ds, off, s) {
+  const c = Math.cos(o.yaw * RAD), n = Math.sin(o.yaw * RAD), dx = ds - o.ds, dz = off - o.off;
+  return [(dx * c + dz * n) / s, (-dx * n + dz * c) / s];
+}
+function toWorld(o, mx, mz, s) {
+  const c = Math.cos(o.yaw * RAD), n = Math.sin(o.yaw * RAD);
+  return [o.ds + s * (mx * c - mz * n), o.off + s * (mx * n + mz * c)];
+}
+function hitObj(o, ds, off) {
+  const a = assetById[o.asset]; if (!a) return false;
+  const g = a.grid, [mx, mz] = toModel(o, ds, off, o.scale), pad = 5 / view.z / o.scale;
+  for (const [ax, az] of [[0, 0], [pad, 0], [-pad, 0], [0, pad], [0, -pad]]) {
+    const i = Math.floor((mx + ax - g.x0) / g.cell), j = Math.floor((mz + az - g.z0) / g.cell);
+    if (i >= 0 && j >= 0 && i < g.nx && j < g.nz && g.h[j * g.nx + i] >= 0) return true;
+  }
+  return false;
+}
+function hitGate(g, ds, off) { const p = 9 / view.z; return Math.abs(ds - g.ds) <= p && off >= g.off - g.width / 2 - p && off <= g.off + g.width / 2 + p; }
+function hitUte(ds, off) {
+  if (!doc || !doc.ute) return false; const u = A.ute, [mx, mz] = toModel(doc.ute, ds, off, 1);
+  return Math.abs(mx) <= u.length / 2 && Math.abs(mz) <= u.width / 2;
+}
+function pick(ds, off) {
+  let found = null;
+  for (let i = doc.gates.length - 1; i >= 0 && !found; i--) if (hitGate(doc.gates[i], ds, off)) found = {t: 'g', i};
+  const seq = drawOrder();      // (the one drawn on top first)
+  for (let k = seq.length - 1; k >= 0 && !found; k--) if (hitObj(doc.objects[seq[k]], ds, off)) found = {t: 'o', i: seq[k]};
+  if (hitUte(ds, off) && (!found || (sel && sel.t === 'u'))) found = {t: 'u', i: 0};
+  return found;
+}
+function selItem() { if (!sel || !doc) return null; return sel.t === 'o' ? doc.objects[sel.i] : sel.t === 'g' ? doc.gates[sel.i] : doc.ute; }
+function handlePos() {      // screen position of the rotate handle of the selected rock or the ute
+  const it = selItem(); if (!it || sel.t === 'g') return null;
+  let reach;
+  if (sel.t === 'u') reach = A.ute.length / 2; else { const a = assetById[it.asset]; reach = Math.max(Math.abs(a._bx1), Math.abs(a._bx0), Math.abs(a._bz0), Math.abs(a._bz1)) * it.scale; }
+  const d = reach + 30 / view.z;
+  return [sx(it.ds + d * Math.cos(it.yaw * RAD)), sy(it.off + d * Math.sin(it.yaw * RAD))];
+}
+function fixPos(p) { p.ds = clamp(r2(p.ds), 0, len()); p.off = clamp(r2(p.off), offMin(), offMax()); }
+const snapv = v => $('csnap').checked ? Math.round(v * 10) / 10 : v;
+
+// ---------- drawing ----------
+function pill(text, x, y, bg, fg, font) {
+  ctx.font = font || '600 11px ' + FONT;
+  const w = ctx.measureText(text).width + 10, h = 16;
+  ctx.fillStyle = bg; ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x - w / 2, y - h / 2, w, h, 8); else ctx.rect(x - w / 2, y - h / 2, w, h);
+  ctx.fill(); ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y + .5);
+}
+const stamps = new WeakMap(); let zoomStill = false, lastZoom = 0, stampPx = 0;
+function drawObj(o, alpha, R) {
+  const a = assetById[o.asset]; if (!a) return;
+  const g = a.grid, k = o.scale * view.z, look = classOf(a, o.scale, R && R.stacked ? R.top : null), bm = bitmap(a, look);
+  // While the zoom stays put, each rock is kept as a ready-turned, ready-sized picture and simply stamped down.
+  const reach = Math.hypot(Math.max(Math.abs(g.x0), Math.abs(g.x0 + g.nx * g.cell)), Math.max(Math.abs(g.z0), Math.abs(g.z0 + g.nz * g.cell)));
+  const half = Math.ceil(reach * k * DPR) + 2;
+  if (!alpha && zoomStill && half <= 512 && stampPx + half * half * 4 <= 5e7) {
+    const cx = sx(o.ds) * DPR, cy = sy(o.off) * DPR;
+    if (cx + half < 0 || cy + half < 0 || cx - half > cv.width || cy - half > cv.height) return;
+    stampPx += half * half * 4;
+    let s = stamps.get(o); if (!s) { s = {c: document.createElement('canvas'), key: ''}; stamps.set(o, s); }
+    const key = o.asset + '|' + look + '|' + o.scale + '|' + o.yaw + '|' + view.z + '|' + DPR;
+    if (s.key !== key) {
+      s.c.width = s.c.height = half * 2;
+      const x = s.c.getContext('2d'); x.translate(half, half); x.rotate(-o.yaw * RAD); x.scale(k * DPR, -k * DPR);
+      x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(bm, g.x0, g.z0, g.nx * g.cell, g.nz * g.cell);
+      s.key = key;
+    }
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(s.c, Math.round(cx) - half, Math.round(cy) - half); ctx.restore();
+    return;
+  }
+  ctx.save(); ctx.translate(sx(o.ds), sy(o.off)); ctx.rotate(-o.yaw * RAD); ctx.scale(k, -k);
+  if (alpha) ctx.globalAlpha = alpha;
+  ctx.imageSmoothingQuality = k * g.cell * DPR >= bm.width / g.nx * 0.5 ? 'low' : 'high';      // plain smoothing is enough, and much quicker, unless it is drawn very small
+  ctx.drawImage(bm, g.x0, g.z0, g.nx * g.cell, g.nz * g.cell);
+  ctx.restore();
+}
+function drawObjLabel(o, R) {
+  const a = assetById[o.asset]; if (!a) return;
+  if (Math.max(a._len, a._wid) * o.scale * view.z < 34) return;
+  const st = R && R.stacked, [cx, cz] = toWorld(o, a._cx, a._cz, o.scale), k = classOf(a, o.scale, st ? R.top : null);
+  pill((st ? 'top ' + m2(R.top) + ' m' : m2(a.height * o.scale) + ' m') + (o.loose ? ' loose' : ''), sx(cx), sy(cz), CLS_COL[k], '#fff');
+}
+function signShape(c, shape, x, y, r, col) {
+  c.beginPath();
+  if (shape === 'circle') c.arc(x, y, r, 0, 7);
+  else if (shape === 'square') c.rect(x - r * .88, y - r * .88, r * 1.76, r * 1.76);
+  else { c.moveTo(x, y - r * 1.15); c.lineTo(x + r * 1.15, y); c.lineTo(x, y + r * 1.15); c.lineTo(x - r * 1.15, y); c.closePath(); }
+  c.fillStyle = col; c.fill(); c.lineWidth = 2; c.strokeStyle = '#fff'; c.stroke();
+}
+function drawGate(g, alpha, selected) {
+  const col = GATE_COL[g.grade] || '#555', x = sx(g.ds), y1 = sy(g.off + g.width / 2), y2 = sy(g.off - g.width / 2), pr = Math.max(5, 0.13 * view.z);
+  ctx.save(); if (alpha) ctx.globalAlpha = alpha;
+  if (selected) { ctx.strokeStyle = '#1a73e8'; ctx.lineWidth = 9; ctx.globalAlpha = .35; ctx.beginPath(); ctx.moveTo(x, y1 - pr); ctx.lineTo(x, y2 + pr); ctx.stroke(); ctx.globalAlpha = alpha || 1; }
+  ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke(); ctx.setLineDash([]);
+  for (const y of [y1, y2]) { ctx.beginPath(); ctx.arc(x, y, pr, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+  signShape(ctx, GATE_SHAPE[g.grade], x, y1 - pr - 13, 8, col);
+  pill(m2(g.width) + ' m gap', x, (y1 + y2) / 2, 'rgba(255,255,255,.92)', col);
+  ctx.restore();
+}
+function drawUte(u, selected) {
+  const U = A.ute, z = view.z, L = U.length, Wd = U.width;
+  ctx.save(); ctx.translate(sx(u.ds), sy(u.off)); ctx.rotate(-u.yaw * RAD); ctx.scale(z, -z);
+  const fx = L / 2 - U.front_overhang, rx = fx - U.wheelbase;
+  ctx.fillStyle = 'rgba(20,24,30,.62)';
+  for (const ax of [fx, rx]) for (const s of [1, -1]) ctx.fillRect(ax - U.tyre_r, s * U.track / 2 - U.tyre_w / 2, U.tyre_r * 2, U.tyre_w);
+  ctx.fillStyle = 'rgba(40,110,220,.20)'; ctx.strokeStyle = selected ? '#1a73e8' : 'rgba(18,60,150,.95)'; ctx.lineWidth = (selected ? 3 : 2) / z;
+  ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-L / 2, -Wd / 2, L, Wd, 0.25); else ctx.rect(-L / 2, -Wd / 2, L, Wd); ctx.fill(); ctx.stroke();
+  ctx.lineWidth = 1.2 / z; ctx.beginPath();               // cab and bonnet lines
+  ctx.moveTo(fx - 0.75, -Wd / 2); ctx.lineTo(fx - 0.75, Wd / 2); ctx.moveTo(fx - 2.1, -Wd / 2); ctx.lineTo(fx - 2.1, Wd / 2); ctx.stroke();
+  ctx.fillStyle = 'rgba(18,60,150,.9)'; ctx.beginPath(); ctx.moveTo(L / 2 - 0.08, 0); ctx.lineTo(L / 2 - 0.6, 0.38); ctx.lineTo(L / 2 - 0.6, -0.38); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  if (z > 9) { const c = Math.abs(Math.cos(u.yaw * RAD)), n = Math.abs(Math.sin(u.yaw * RAD));
+    pill('ute (the arrow is its nose)', sx(u.ds), sy(u.off) + (Wd / 2 * c + L / 2 * n) * z + 13, 'rgba(255,255,255,.85)', '#123c96'); }
+}
+function drawSelection() {
+  const it = selItem(); if (!it) return;
+  if (sel.t === 'o') {
+    const a = assetById[it.asset]; if (!a) return; const k = it.scale * view.z;
+    ctx.save(); ctx.translate(sx(it.ds), sy(it.off)); ctx.rotate(-it.yaw * RAD); ctx.scale(k, -k);
+    ctx.strokeStyle = '#1a73e8'; ctx.lineWidth = 2 / k; ctx.setLineDash([6 / k, 4 / k]);
+    const p = 4 / k; ctx.strokeRect(a._bx0 - p, a._bz0 - p, a._len + 2 * p, a._wid + 2 * p); ctx.restore();
+  }
+  if (PHONE) return drawRing(it);
+  const h = handlePos(); if (!h) return;
+  ctx.strokeStyle = '#1a73e8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(sx(it.ds), sy(it.off)); ctx.lineTo(h[0], h[1]); ctx.stroke();
+  ctx.beginPath(); ctx.arc(h[0], h[1], 8, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(h[0], h[1], 3.5, .6, 5.4); ctx.lineWidth = 1.5; ctx.stroke();
+}
+function drawBack() {        // the creek itself: everything that only changes when the view does
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#e4e0d4'; ctx.fillRect(0, 0, W, H);
+  if (!spot) return;
+  const z = view.z, L = len(), o0 = offMin(), o1 = offMax(), X0 = sx(0), X1 = sx(L), Y0 = sy(o1), Y1 = sy(o0);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(terrain, X0, Y0, X1 - X0, Y1 - Y0);
+  // grid
+  ctx.save(); ctx.beginPath(); ctx.rect(X0, Y0, X1 - X0, Y1 - Y0); ctx.clip();
+  for (let pass = 0; pass < 2; pass++) {
+    if (pass === 0 && z < 9) continue;
+    ctx.beginPath(); ctx.strokeStyle = pass ? 'rgba(40,40,30,.26)' : 'rgba(40,40,30,.10)'; ctx.lineWidth = 1;
+    for (let d = 0; d <= L; d++) { if ((d % 5 === 0) !== !!pass) continue; const x = Math.round(sx(d)) + .5; if (x < -2 || x > W + 2) continue; ctx.moveTo(x, Y0); ctx.lineTo(x, Y1); }
+    for (let o = Math.ceil(o0); o <= o1; o++) { if ((o % 5 === 0) !== !!pass) continue; const y = Math.round(sy(o)) + .5; ctx.moveTo(X0, y); ctx.lineTo(X1, y); }
+    ctx.stroke();
+  }
+  // bed edge and easy line
+  ctx.save(); ctx.translate(sx(0), sy(0)); ctx.scale(z, -z); ctx.strokeStyle = 'rgba(70,56,30,.85)'; ctx.lineWidth = 2 / z; ctx.lineCap = 'round'; ctx.stroke(bedPath); ctx.restore();
+  ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2; ctx.setLineDash([9, 8]); ctx.beginPath();
+  spot.rows.forEach((r, i) => { if (r.line == null) return; const x = sx(r.ds), y = sy(r.line); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+  ctx.stroke(); ctx.setLineDash([]);
+  const lr = spot.rows[Math.min(spot.rows.length - 1, 3)];
+  if (lr && lr.line != null) { ctx.font = 'italic 12px ' + FONT; ctx.fillStyle = 'rgba(60,52,30,.85)'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('easy line', Math.max(sx(lr.ds), 8), sy(lr.line) - 5); }
+  ctx.restore();
+  ctx.strokeStyle = '#4a4636'; ctx.lineWidth = 1.5; ctx.strokeRect(X0, Y0, X1 - X0, Y1 - Y0);
+}
+let bg = null, bgKey = '', lastKey = '';
+function draw() {
+  needDraw = false;
+  // The creek is kept as a ready-made picture while the view stays still, so moving rocks is cheap.
+  const key = [view.ds0, view.offTop, view.z, cv.width, cv.height, spot ? spot.slot : ''].join();
+  if (key !== bgKey && key === lastKey) {
+    if (!bg) bg = document.createElement('canvas');
+    if (bg.width !== cv.width || bg.height !== cv.height) { bg.width = cv.width; bg.height = cv.height; }
+    const real = ctx; ctx = bg.getContext('2d'); try { drawBack(); } finally { ctx = real; }
+    bgKey = key;
+  }
+  lastKey = key;
+  zoomStill = view.z === lastZoom; lastZoom = view.z; stampPx = 0;
+  if (key === bgKey) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(bg, 0, 0); } else drawBack();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!spot) return;
+  const z = view.z, L = len(), o0 = offMin(), o1 = offMax(), X0 = sx(0), X1 = sx(L), Y0 = sy(o1), Y1 = sy(o0);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  // bank labels
+  const bx = clamp(X0, 0, W) + 62;
+  pill('left bank', bx, Math.max(Y0, 0) + 13, 'rgba(34,60,34,.82)', '#fff');
+  pill('right bank', bx, Math.min(Y1, H - 62) - 13,'rgba(34,60,34,.82)', '#fff');
+  // things
+  if (doc) {
+    const RS = restAll(), seq = drawOrder();      // lower things first, so an upper one is drawn over what it rests on
+    seq.forEach(i => drawObj(doc.objects[i], 0, RS[i]));
+    seq.forEach(i => drawObjLabel(doc.objects[i], RS[i]));
+    doc.gates.forEach((g, i) => drawGate(g, 0, sel && sel.t === 'g' && sel.i === i));
+    if (ghost && ghost.over) { if (ghost.kind === 'gate') drawGate(ghost.item, .6); else drawObj(ghost.item, .6); }
+    if (doc.ute) drawUte(doc.ute, sel && sel.t === 'u');
+    drawSelection();
+  }
+  // distance markers, pinned to the bottom of the stretch (or the bottom of the view)
+  const yb = Math.min(Y1 + 4, H - 62);
+  if (yb < Y1 + 3) { ctx.fillStyle = 'rgba(228,224,212,.86)'; ctx.fillRect(0, yb, W, 22); }
+  ctx.font = '12px ' + FONT; ctx.fillStyle = '#2b2b22'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.strokeStyle = '#2b2b22'; ctx.lineWidth = 1;
+  const every = z < 5.5 ? 10 : 5;
+  for (let d = 0; d <= L; d += every) { const x = sx(d); if (x < -20 || x > W + 20) continue; ctx.beginPath(); ctx.moveTo(x, yb); ctx.lineTo(x, yb + 5); ctx.stroke(); ctx.fillText(d + ' m', x, yb + 7); }
+  // direction of travel
+  const ay = Math.max(Y0 - 24, 26), ax = clamp(X0, 0, W) + 14;
+  ctx.lineCap = 'butt';
+  if (ay > Y0 - 10) { ctx.fillStyle = 'rgba(228,224,212,.86)'; ctx.fillRect(ax - 8, ay - 22, 330, 36); }
+  ctx.strokeStyle = ctx.fillStyle = '#23261f'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + 286, ay); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ax + 306, ay); ctx.lineTo(ax + 284, ay - 10); ctx.lineTo(ax + 284, ay + 10); ctx.closePath(); ctx.fill();
+  ctx.font = '700 13px ' + FONT; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('DIRECTION OF TRAVEL', ax, ay - 5);
+  // measuring
+  if (measure.a) {
+    const b = measure.b || measure.h;
+    ctx.fillStyle = ctx.strokeStyle = '#c2185b'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(sx(measure.a[0]), sy(measure.a[1]), 4, 0, 7); ctx.fill();
+    if (b) {
+      ctx.beginPath(); ctx.moveTo(sx(measure.a[0]), sy(measure.a[1])); ctx.lineTo(sx(b[0]), sy(b[1])); ctx.stroke();
+      ctx.beginPath(); ctx.arc(sx(b[0]), sy(b[1]), 4, 0, 7); ctx.fill();
+      const dist = Math.hypot(b[0] - measure.a[0], b[1] - measure.a[1]);
+      pill(m2(dist) + ' m', (sx(measure.a[0]) + sx(b[0])) / 2, (sy(measure.a[1]) + sy(b[1])) / 2 - 13, '#c2185b', '#fff', '700 12px ' + FONT);
+    }
+  }
+  // scale bar
+  let n = 0.5; for (const c of [0.5, 1, 2, 5, 10, 20]) if (c * z <= 150) n = c;
+  const bw = n * z, bx0 = 14, by = H - 14;
+  ctx.fillStyle = 'rgba(251,249,243,.9)'; ctx.fillRect(bx0 - 8, by - 24, bw + 16, 32);
+  ctx.strokeStyle = ctx.fillStyle = '#23261f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(bx0, by - 6); ctx.lineTo(bx0, by); ctx.lineTo(bx0 + bw, by); ctx.lineTo(bx0 + bw, by - 6); ctx.stroke();
+  ctx.font = '12px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(n + ' m', bx0 + bw / 2, by - 4);
+}
+function loop() { if (needDraw) { try { draw(); if (PHONE) phoneShow(); } catch (e) { console.error(e); } } requestAnimationFrame(loop); }
+
+// ---------- the document: undo, saving, drafts ----------
+function body() {
+  const b = {format: 1, name: doc.name, notes: doc.notes, slot: doc.slot, objects: doc.objects.map(o => Object.assign({asset: o.asset, ds: r2(o.ds), off: r2(o.off), yaw: normYaw(o.yaw), scale: r2(o.scale)}, ordOf(o) ? {order: ordOf(o)} : {}, o.loose ? {loose: true} : {})),
+    gates: doc.gates.map(g => ({grade: g.grade, ds: r2(g.ds), off: r2(g.off), width: r2(g.width)}))};
+  if (doc.ute) b.ute = {ds: r2(doc.ute.ds), off: r2(doc.ute.off), yaw: normYaw(doc.ute.yaw)};
+  return b;
+}
+const serial = () => JSON.stringify(body());
+const snap = () => { const b = body(); return JSON.stringify({objects: b.objects, gates: b.gates, ute: b.ute || null}); };
+const dirty = () => !!doc && serial() !== savedSerial;
+function commit() {            // call after every finished change to rocks, gates or the ute
+  if (!doc) return;
+  const s = snap();
+  if (s !== lastSnap) { undoStack.push(lastSnap); if (undoStack.length > 200) undoStack.shift(); redoStack = []; lastSnap = s; }
+  changed();
+}
+function changed() { save(); renderPanel(); redraw(); }      // (every finished change is kept at once)
+function applySnap(s) {
+  const o = JSON.parse(s); doc.objects = o.objects; doc.gates = o.gates; doc.ute = o.ute; $('cute').checked = !!doc.ute;
+  if (sel && ((sel.t === 'o' && sel.i >= doc.objects.length) || (sel.t === 'g' && sel.i >= doc.gates.length) || (sel.t === 'u' && !doc.ute))) sel = null;
+  lastSnap = s; panelKey = ''; changed();
+}
+function undo() { if (!doc || !undoStack.length) return; redoStack.push(lastSnap); applySnap(undoStack.pop()); }
+function redo() { if (!doc || !redoStack.length) return; undoStack.push(lastSnap); applySnap(redoStack.pop()); }
+
+const hhmm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+const dayTime = t => { if (!t) return ''; const d = new Date(t); return d.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ', ' + hhmm(t); };
+function showState() {
+  const el = $('state'); el.className = '';
+  $('bplay').disabled = $('blook').disabled = $('bshare').disabled = !doc; $('bundo').disabled = !undoStack.length; $('bredo').disabled = !redoStack.length;
+  if (!doc) { el.textContent = ''; return; }
+  if (saveFailed) { el.textContent = 'Not kept: this browser would not save it'; el.className = 'bad'; }
+  else if (dirty()) { el.textContent = 'Saving...'; el.className = 'dirty'; }
+  else el.textContent = 'Saved in this browser';
+}
+const cantKeep = e => e instanceof BD.Bad ? e.message : 'This browser would not keep the piece (private browsing, or its storage is full). Use Share, or Save as a file in My pieces, so it is not lost.';
+function scheduleDraft() { clearTimeout(saveTimer); showState(); if (doc && dirty()) saveTimer = setTimeout(save, 500); }      // (typing: kept half a second after the last key)
+function save() {      // into this browser's own storage; true when it is there
+  clearTimeout(saveTimer); saveTimer = null;
+  if (!doc) return true;
+  if (dirty() || saveFailed) {
+    const s = serial(), was = saveFailed;
+    try { const p = BD.store.put(doc.id, body()); doc.updated = p.updated; savedSerial = s; saveFailed = false; }
+    catch (e) { saveFailed = true; if (!was) toast(cantKeep(e)); }
+  }
+  showState();
+  return !saveFailed;
+}
+function setDoc(l) {
+  doc = {id: l.id, name: l.name || l.id, notes: l.notes || '', slot: l.slot, updated: l.updated,
+    objects: (l.objects || []).filter(o => assetById[o.asset]).map(o => Object.assign({asset: o.asset, ds: +o.ds, off: +o.off, yaw: +o.yaw || 0, scale: +o.scale || 1}, o.order > 0 ? {order: Math.min(99, Math.round(o.order))} : {}, o.loose === true && BD.canLoose(o.asset) ? {loose: true} : {})),
+    gates: (l.gates || []).filter(g => A.gates[g.grade]).map(g => ({grade: g.grade, ds: +g.ds, off: +g.off, width: +g.width})),
+    ute: l.ute ? {ds: +l.ute.ds, off: +l.ute.off, yaw: +l.ute.yaw || 0} : null};
+  savedSerial = serial(); undoStack = []; redoStack = []; lastSnap = snap(); sel = null; saveFailed = false; lastUte = null;
+  measure.a = measure.b = measure.h = null;
+  setSpot(doc.slot); $('cute').checked = !!doc.ute;
+  try { localStorage.setItem('bdcb:last', doc.id); } catch (e) {}
+  $('welcome').classList.add('hidden');
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  showHeader(); showState(); renderPanel(); fit();
+}
+function closeDoc() {
+  doc = null; sel = null; undoStack = []; redoStack = [];
+  try { localStorage.removeItem('bdcb:last'); } catch (e) {}
+  $('welcome').classList.remove('hidden'); showHeader(); showState(); renderPanel(); redraw();
+}
+function showHeader() {
+  const n = $('name'), no = $('notes');
+  n.disabled = no.disabled = !doc;
+  if (document.activeElement !== n) n.value = doc ? doc.name : '';
+  if (document.activeElement !== no) no.value = doc ? doc.notes : '';
+  $('placewrap').classList.toggle('hidden', !doc);
+  if (doc) $('place').value = String(doc.slot);
+  BD.titles(doc ? doc.name : 'Builder');
+}
+function openLayout(id, quiet) {
+  const l = BD.store.get(id);
+  if (!l) { if (!quiet) toast('That piece is no longer in this browser.'); return false; }
+  setDoc(l);
+  return true;
+}
+function adopt(piece) {      // a piece from outside (the example, a file) becomes one of this browser's own and is opened
+  save();
+  const l = BD.store.add(piece); $('listdlg').classList.add('hidden'); setDoc(l);
+}
+async function newLayout() {
+  const name = await ask({title: 'New piece', text: 'Give it a name. You can change it later.', input: 'My creek piece', ok: 'Create'});
+  if (!name) return;
+  try { adopt(BD.blank(BD.cleanName(name), DEFAULT_SLOT)); } catch (e) { toast(cantKeep(e)); }
+}
+async function addExample() {
+  try {
+    const r = await fetch('data/example.json'); if (!r.ok) throw new Error('missing');
+    adopt(BD.check(await r.json()));
+  } catch (e) { toast(e instanceof BD.Bad || e instanceof DOMException ? cantKeep(e) : 'The example could not be loaded. Reload the page to try again.'); }
+}
+$('place').onchange = e => {      // another stretch of creek: the rocks keep their places, the ground under them changes
+  const v = +e.target.value; e.target.blur();
+  if (!doc || v === doc.slot || !BD.spotBySlot[v]) return;
+  doc.slot = v; setSpot(v); doc.objects.forEach(fixPos); doc.gates.forEach(fixPos); if (doc.ute) fixPos(doc.ute);
+  save(); showHeader(); renderPanel(); fit();
+};
+$('smallx').onclick = () => { $('small').remove(); resize(); };
+
+// ---------- dialogs ----------
+let askDone = null;
+function ask({title, text, input, ok, cancel, danger}) {
+  if (askDone) askDone(null);
+  $('asktitle').textContent = title; $('asktext').textContent = text || '';
+  const inp = $('askinput'); inp.classList.toggle('hidden', input == null); inp.value = input || '';
+  $('askok').textContent = ok || 'OK'; $('askcancel').textContent = cancel || 'Cancel';
+  $('askok').className = danger ? 'danger' : 'primary';
+  $('askdlg').classList.remove('hidden');
+  setTimeout(() => { if (input != null) { inp.focus(); inp.select(); } else $('askok').focus(); }, 0);
+  return new Promise(res => { askDone = v => { askDone = null; $('askdlg').classList.add('hidden'); res(v); }; });
+}
+function askAnswer(yes) { if (!askDone) return; const inp = $('askinput'); if (!yes) return askDone(null); if (!inp.classList.contains('hidden')) { const v = inp.value.trim(); if (!v) { inp.focus(); return; } askDone(v); } else askDone(true); }
+$('askok').onclick = () => askAnswer(true); $('askcancel').onclick = () => askAnswer(false);
+$('askinput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); askAnswer(true); } });
+let toastTimer = null;
+let toastN = 0;
+function toast(msg, ms) { const t = $('toast'); toastN++; t.textContent = msg; t.classList.remove('hidden'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('hidden'), ms || 6000); }
+
+function saveFile(p) { BD.download(new Blob([BD.toFile(p)], {type: 'application/json'}), 'bush-drift-' + BD.slug(p.name) + '.json'); }
+function showList(msg) {
+  save();
+  $('listdlg').classList.remove('hidden');
+  const ls = BD.store.list(), box = $('list'), el = BD.el; box.textContent = '';
+  $('listmsg').textContent = msg || (ls.length ? 'These are kept in this browser, on this ' + (PHONE ? 'phone' : 'computer') + ' only. Save one as a file to back it up or to move it.' : 'Nothing here yet. Press New piece to start.');
+  $('listmsg').className = msg ? 'err' : '';
+  if (!ls.length) return;
+  const tb = el('table', null, [el('tr', null, ['Name', 'Location', 'Last changed', 'Rocks and logs', 'Gates', ''].map(t => el('th', {text: t})))]);
+  for (const l of ls) {      // (names and notes go in as text, never as HTML)
+    const name = el('td', null, [el('b', {text: l.name})]);
+    if (l.notes) { name.appendChild(el('br')); name.appendChild(el('small', {text: l.notes.slice(0, 90)})); }
+    const act = el('td', {class: 'act'}, [['open', 'Open', 'primary'], ['ren', 'Rename', ''], ['dup', 'Duplicate', ''], ['file', 'Save as a file', ''], ['del', 'Delete', 'danger']].map(a => el('button', {'data-act': a[0], text: a[1], class: a[2]})));
+    tb.appendChild(el('tr', {'data-id': l.id, class: doc && doc.id === l.id ? 'cur' : ''}, [name, el('td', {text: BD.placeName(l.slot)}), el('td', {text: dayTime(l.updated)}), el('td', {text: String(l.objects.length)}), el('td', {text: String(l.gates.length)}), act]));
+  }
+  box.appendChild(tb);
+}
+$('list').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const id = b.closest('tr').dataset.id, act = b.dataset.act;
+  save();
+  const p = BD.store.get(id); if (!p) return showList('That piece is no longer in this browser.');
+  if (act === 'open') {
+    if (!doc || doc.id !== id) openLayout(id);
+    $('listdlg').classList.add('hidden');
+  } else if (act === 'ren') {
+    const n = await ask({title: 'Rename "' + p.name + '"', text: 'Its new name.', input: p.name, ok: 'Rename'});
+    if (!n) return;
+    try { if (doc && doc.id === id) { doc.name = BD.cleanName(n); showHeader(); save(); } else { p.name = BD.cleanName(n); BD.store.put(id, p); } showList(); } catch (err) { showList(cantKeep(err)); }
+  } else if (act === 'dup') {
+    const n = await ask({title: 'Duplicate "' + p.name + '"', text: 'Name for the copy.', input: (p.name + ' copy').slice(0, 80), ok: 'Duplicate'});
+    if (!n) return;
+    try { p.name = BD.cleanName(n); BD.store.add(p); showList(); } catch (err) { showList(cantKeep(err)); }
+  } else if (act === 'file') {
+    saveFile(p);
+  } else if (act === 'del') {
+    const yes = await ask({title: 'Delete "' + p.name + '"?', text: 'It is removed from this browser for good. Save it as a file first if you might want it back.', ok: 'Delete it', danger: true});
+    if (!yes) return;
+    BD.store.remove(id); if (doc && doc.id === id) closeDoc(); showList();
+  }
+});
+$('listclose').onclick = () => $('listdlg').classList.add('hidden');
+$('listnew').onclick = $('bnew').onclick = $('wnew').onclick = () => newLayout();
+$('bopen').onclick = $('wopen').onclick = () => showList();
+$('wexample').onclick = () => addExample();
+$('listfile').onclick = () => { $('filein').value = ''; $('filein').click(); };
+$('filein').onchange = async e => {      // a piece from a file: checked as strictly as one from a link
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  try { if (f.size > 2000000) throw new BD.Bad('That file is too big to be a creek piece.'); adopt(BD.fromFile(await f.text())); toast('Opened from the file. It is now one of your pieces.'); }
+  catch (err) { showList(err instanceof BD.Bad ? 'That file could not be opened. ' + err.message : cantKeep(err)); }
+};
+
+// ---------- share: a link with the whole piece in it ----------
+async function sharePiece() {
+  if (!doc) return; save();
+  let url; try { url = await BD.shareUrl(body()); } catch (e) { return toast(e instanceof BD.Bad ? e.message : 'The link could not be made.'); }
+  $('sharelink').value = url; $('sharecopy').textContent = 'Copy the link';
+  $('shareinfo').textContent = 'The link is ' + url.length + ' characters long.' + (url.length > 1800 ? ' That is long for some chat apps: if it gets cut short, save the piece as a file and send that instead.' : '');
+  $('sharedlg').classList.remove('hidden'); setTimeout(() => { $('sharelink').focus(); $('sharelink').select(); }, 0);
+}
+$('bshare').onclick = () => sharePiece();
+$('shareclose').onclick = () => $('sharedlg').classList.add('hidden');
+$('sharecopy').onclick = async () => { const ok = await BD.copy($('sharelink').value); $('sharecopy').textContent = ok ? 'Copied' : 'Copy the link'; toast(ok ? 'Link copied. Paste it in a message to a mate.' : 'The browser would not copy it. Select the link and copy it yourself.'); };
+$('sharefile').onclick = () => { if (doc) saveFile(body()); };
+
+// ---------- drive it: the game in a new tab, the ute just above this piece ----------
+// "Look around in 3D" is the same page with no driving (look=1), kept in one window of its own (LOOKWIN): pressing the
+// button again brings that window back rather than opening another, and the window follows each change by itself.
+const LOOKWIN = 'bdcb-look';
+function playPiece(look) {
+  if (!doc) return;
+  if (!save()) return toast(cantKeep(null));
+  const id = doc.id, full = new URL('play/?id=' + encodeURIComponent(id) + (look ? '&look=1' : ''), location.href).href;
+  const blocked = 'The browser stopped the new ' + (look ? 'window' : 'tab') + '. Allow pop-ups for this page, then press the button again.';
+  if (!look && PHONE) { location.href = full; return; }      // a phone: the same tab, and the play page's Builder link comes back
+  if (!look) { if (!window.open(full, '_blank')) toast(blocked); return; }
+  const w = window.open('', LOOKWIN, 'popup,width=1100,height=760'); if (!w) return toast(blocked);
+  let showing = false; try { showing = !!(w.__ckLook && w.__ckLook.id === id && w.__ckLook.on()); } catch (e) {}      // already looking around this piece: it follows by itself
+  if (!showing) w.location = full;
+  try { w.focus(); } catch (e) {}
+}
+$('bplay').onclick = () => playPiece(false);
+$('blook').onclick = () => playPiece(true);
+
+// ---------- palette ----------
+function buildPalette() {
+  const P = $('palette'), groups = [], by = {};
+  for (const a of A.assets) { if (!by[a.group]) { by[a.group] = []; groups.push(a.group); } by[a.group].push(a); }
+  const S = 32;      // one scale for the whole list (pixels a metre); only the very long pieces are shrunk to fit
+  let h = '<h3>Gates</h3>';
+  for (const k of Object.keys(A.gates)) { const g = A.gates[k];
+    h += '<div class="item" data-gate="' + esc(k) + '" title="Click to add, or drag onto the creek"><canvas data-g="' + esc(k) + '" style="width:100px;height:44px"></canvas><div class="meta"><b>' + esc(g.label || k) + ' gate</b><span class="dim">poles ' + m1(g.width) + ' m apart</span><small>' + (g.points != null ? g.points + ' points' : '') + '</small></div></div>'; }
+  for (const gname of groups) {
+    h += '<h3>' + esc(gname || 'Other') + '</h3>';
+    for (const a of by[gname]) { const sd = a.scale.def || 1, k = classOf(a, sd), th = Math.round(clamp(a._wid * sd * S + 8, 30, 76));
+      h += '<div class="item" data-asset="' + esc(a.id) + '" title="' + esc(classText(a, k)) + '. Click to add, or drag onto the creek."><canvas data-a="' + esc(a.id) + '" style="width:100px;height:' + th + 'px"></canvas><div class="meta"><b>' + esc(a.name) + '</b><span class="dim">' + m1(a._len * sd) + ' x ' + m1(a._wid * sd) + ' m, ' + m2(a.height * sd) + ' m high</span><span class="badge ' + k + '">' + CLS_WORD[k] + '</span>' + (a.note ? '<small>' + esc(a.note) + '</small>' : '') + '</div></div>'; }
+  }
+  P.innerHTML = h;
+  P.querySelectorAll('canvas').forEach(c => thumb(c, 100, parseInt(c.style.height), S));
+}
+function thumb(c, w, hh, S) {      // the picture of a rock or log (data-a) or a gate (data-g), w by hh, S pixels a metre at most
+  const dpr = window.devicePixelRatio || 1; c.width = w * dpr; c.height = hh * dpr; const x = c.getContext('2d'); x.scale(dpr, dpr);
+  if (c.dataset.a) { const a = assetById[c.dataset.a], g = a.grid, sd = a.scale.def || 1, s = Math.min(S * sd, (w - 6) / a._len, (hh - 4) / a._wid);
+    x.translate(w / 2, hh / 2); x.scale(s, -s); x.translate(-a._cx, -a._cz); x.imageSmoothingQuality = 'high';
+    x.drawImage(bitmap(a, classOf(a, a.scale.def || 1)), g.x0, g.z0, g.nx * g.cell, g.nz * g.cell);
+  } else { const k = c.dataset.g, col = GATE_COL[k] || '#555', f = Math.min(w / 100, hh / 44);
+    x.translate((w - 100 * f) / 2, (hh - 44 * f) / 2); x.scale(f, f);
+    x.strokeStyle = col; x.lineWidth = 2; x.setLineDash([5, 4]); x.beginPath(); x.moveTo(36, 22); x.lineTo(90, 22); x.stroke(); x.setLineDash([]);
+    for (const px of [36, 90]) { x.beginPath(); x.arc(px, 22, 5, 0, 7); x.fillStyle = col; x.fill(); x.strokeStyle = '#fff'; x.stroke(); }
+    signShape(x, GATE_SHAPE[k], 15, 22, 9, col); }
+}
+function centreSpot() {
+  let ds = clamp(wds(W / 2), 1, len() - 1), off = clamp(woff(H / 2), offMin() + 1, offMax() - 1);
+  const taken = (d, o) => doc.objects.some(q => Math.abs(q.ds - d) < .05 && Math.abs(q.off - o) < .05) || doc.gates.some(q => Math.abs(q.ds - d) < .05 && Math.abs(q.off - o) < .05);
+  let n = 0; while (taken(r2(ds), r2(off)) && n++ < 60) { ds = ds + 0.6 > len() ? 1 : ds + 0.6; }
+  return [ds, off];
+}
+function makeItem(kind, id, ds, off) {
+  if (kind === 'gate') { const it = {grade: id, ds, off, width: A.gates[id].width}; fixPos(it); return it; }
+  const a = assetById[id], it = {asset: id, ds, off, yaw: 0, scale: a.scale.def || 1}; fixPos(it); return it;
+}
+async function place(kind, id, ds, off) {
+  if (!doc) { await newLayout(); if (!doc) return; }
+  if (kind === 'gate' && doc.gates.length >= 7) return toast('A piece can hold up to 7 gates.');
+  if (kind !== 'gate' && doc.objects.length >= 200) return toast('A piece can hold up to 200 rocks and logs.');
+  if (ds == null) { const c = centreSpot(); ds = c[0]; off = c[1]; }
+  const it = makeItem(kind, id, snapv(ds), snapv(off));
+  if (kind === 'gate') { doc.gates.push(it); sel = {t: 'g', i: doc.gates.length - 1}; } else { doc.objects.push(it); sel = {t: 'o', i: doc.objects.length - 1}; }
+  commit();
+}
+(function paletteDrag() {
+  const P = $('palette'); let st = null;
+  P.addEventListener('pointerdown', e => {
+    const it = e.target.closest('.item'); if (!it || e.button !== 0) return;
+    st = {kind: it.dataset.gate ? 'gate' : 'asset', id: it.dataset.gate || it.dataset.asset, x: e.clientX, y: e.clientY, moved: false, el: it};
+    try { it.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault();
+  });
+  P.addEventListener('pointermove', e => {
+    if (!st) return;
+    if (!st.moved && Math.hypot(e.clientX - st.x, e.clientY - st.y) > 6) { st.moved = true; document.body.style.cursor = 'grabbing'; }
+    if (!st.moved || !doc) return;
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, over = x >= 0 && y >= 0 && x <= r.width && y <= r.height;
+    ghost = {kind: st.kind, over, item: makeItem(st.kind, st.id, snapv(wds(x)), snapv(woff(y)))}; redraw();
+  });
+  const end = e => {
+    if (!st) return; const s = st; st = null; document.body.style.cursor = '';
+    const g = ghost; ghost = null; redraw();
+    if (e.type === 'pointercancel') return;
+    if (!s.moved || !doc) place(s.kind, s.id);
+    else if (g && g.over) place(s.kind, s.id, g.item.ds, g.item.off);
+  };
+  P.addEventListener('pointerup', end); P.addEventListener('pointercancel', end);
+})();
+
+// ---------- the panel on the right ----------
+let panelKey = '';
+const sideWords = off => Math.abs(off) < 0.005 ? 'in the middle' : m2(Math.abs(off)) + ' m to the driver\'s ' + (off > 0 ? 'left' : 'right') + ' of the middle';
+function posFields() {
+  return '<label class="f">Distance down the stretch<span class="in"><input id="p_ds" type="number" step="0.05"> m</span></label>' +
+    '<label class="f">Across the creek (left is +)<span class="in"><input id="p_off" type="number" step="0.05"> m</span><small id="p_offw"></small></label>';
+}
+function renderPanel() {
+  const P = $('panel'), it = selItem(), key = !doc ? 'none' : !it ? 'doc' : sel.t + ':' + sel.i + ':' + (it.asset || it.grade || '') + (it.loose ? ':loose' : '');
+  if (key !== panelKey) {
+    panelKey = key; let h = '';
+    if (!doc) h = '<h2>Nothing open</h2><p class="hint">Press New to start a piece, or My pieces to carry on with one.</p>';
+    else if (!it) h = '<h2>Nothing selected</h2><table><tr><td>Rocks and logs</td><td id="p_no"></td></tr><tr><td>Gates</td><td id="p_ng"></td></tr><tr><td>Stretch</td><td id="p_len"></td></tr></table><p class="hint">Click a rock, log or gate on the left to add it, or drag it onto the creek. Click one on the creek to change it.</p><p class="hint" id="p_rules"></p>';
+    else if (sel.t === 'o') { const a = assetById[it.asset];
+      h = '<h2>' + esc(a.name) + '</h2><div class="cls"><span class="badge" id="p_badge"></span> <span id="p_cls"></span></div>' +
+        '<table><tr><td>Height</td><td id="p_h"></td></tr><tr><td>Footprint</td><td id="p_fp"></td></tr><tr><td>Sits on</td><td id="p_on"></td></tr></table>' +
+        '<div class="row" style="margin-top:4px"><button id="p_fwd" title="Puts it on top of everything it overlaps: it rests on them, lifted and leaning to suit (key: ])">Bring forward</button><button id="p_back" title="Puts it under everything it overlaps (key: [)">Send back</button></div>' + posFields() +
+        '<label class="f">Rotation<span class="in"><input id="p_yaw" type="number" step="1"> degrees</span><small>0 points down the creek. A bigger number turns it to the driver\'s left.</small></label>' +
+        '<label class="f">Size<input id="p_scr" type="range" min="' + scMin(it) + '" max="' + a.scale.max + '" step="0.01"><span class="in"><input id="p_sc" type="number" step="1" min="' + Math.round(scMin(it) * 100) + '" max="' + Math.round(a.scale.max * 100) + '"> % of normal (' + Math.round(scMin(it) * 100) + ' to ' + Math.round(a.scale.max * 100) + ')</span></label>' +
+        (BD.canLoose(it.asset) ? '<label class="f" style="display:flex;align-items:center;gap:7px"><input id="p_loose" type="checkbox"' + (it.loose ? ' checked' : '') + ' style="width:auto;margin:0"> Loose</label><p class="hint" style="margin-top:2px">A loose log is not fixed down: the ute can push it, roll it and drive over it. It can be made smaller too. Up to ' + BD.MAX_LOOSE + ' a piece.</p>' : '') +
+        '<div class="row"><button id="p_dup">Duplicate</button><button id="p_del" class="danger">Delete</button></div>' + (a.note && !a.fixed_class ? '<p class="hint">' + esc(a.note) + '</p>' : '');
+    } else if (sel.t === 'g') {
+      h = '<h2>Gate</h2><label class="f">Grade<div class="seg">' + Object.keys(A.gates).map(k => '<button data-grade="' + esc(k) + '">' + esc(A.gates[k].label || k) + '</button>').join('') + '</div></label>' +
+        '<table style="margin-top:8px"><tr><td>Points</td><td id="p_pts"></td></tr></table>' +
+        '<label class="f">Gap between the poles<span class="in"><input id="p_w" type="number" step="0.1"> m <span id="p_wr"></span></span></label>' + posFields() +
+        '<p class="hint">The poles stand square across the creek. The ute has to pass between them.</p><div class="row"><button id="p_dup">Duplicate</button><button id="p_del" class="danger">Delete</button></div>';
+    } else { const U = A.ute;
+      h = '<h2>The ute</h2><table><tr><td>Size</td><td>' + m1(U.length) + ' m long, ' + m1(U.width) + ' m wide</td></tr><tr><td>Wheels</td><td>' + m1(U.wheelbase) + ' m front to back, ' + m1(U.track) + ' m side to side</td></tr><tr><td>Tyres</td><td>' + m2(U.tyre_r * 2) + ' m tall, ' + m2(U.tyre_w) + ' m wide</td></tr><tr><td>Clearance</td><td>' + m2(U.clearance) + ' m under the belly</td></tr></table>' + (U.note ? '<p class="hint">' + esc(U.note) + '</p>' : '') + posFields() +
+        '<label class="f">Rotation<span class="in"><input id="p_yaw" type="number" step="1"> degrees</span></label><p class="hint">A true-size outline for judging gaps and lines. Drag it anywhere; it does not block anything.</p><div class="row"><button id="p_hide">Hide the ute</button></div>';
+    }
+    P.innerHTML = h;
+  }
+  const set = (id, v) => { const el = $(id); if (el && document.activeElement !== el) { if (el.tagName === 'INPUT') el.value = v; else el.textContent = v; } };
+  if (!doc) return;
+  if (!it) { set('p_no', doc.objects.length + ' of 200'); set('p_ng', doc.gates.length + ' of 7'); set('p_len', len() + ' m long, ' + m1(offMax() - offMin()) + ' m wide');
+    set('p_rules', 'Up to ' + m2(RULES.climb_max) + ' m high a tyre can climb. From ' + m2(RULES.wall_min) + ' m it is a wall.'); return; }
+  set('p_ds', m2(it.ds)); set('p_off', m2(it.off)); set('p_offw', sideWords(it.off));
+  if (sel.t !== 'g') set('p_yaw', String(r1(it.yaw)));
+  if (sel.t === 'o') { const a = assetById[it.asset], RS = restAll(), R = RS[sel.i], k = classOf(a, it.scale, R.stacked ? R.top : null), b = $('p_badge');
+    b.className = 'badge ' + k; b.textContent = CLS_WORD[k]; set('p_cls', classText(a, k));
+    set('p_h', R.stacked ? m2(a.height * it.scale) + ' m itself; its top is ' + m2(R.top) + ' m above the creek bed' : m2(a.height * it.scale) + ' m');
+    const lean = Math.max(Math.abs(R.along), Math.abs(R.across));
+    set('p_on', R.stacked ? (R.on.length ? R.on.map(j => assetById[doc.objects[j].asset].name).join(' and ') : 'the things under it') + ': lifted ' + m2(R.lift) + ' m' + (lean >= 0.5 ? ', leaning ' + Math.round(lean) + (Math.round(lean) === 1 ? ' degree' : ' degrees') : ', lying level')
+      : ordOf(it) > 0 ? 'The creek bed (nothing lower is under it)' : 'The creek bed'); set('p_fp', m2(a._len * it.scale) + ' m long, ' + m2(a._wid * it.scale) + ' m wide');
+    set('p_scr', it.scale); set('p_sc', Math.round(it.scale * 100)); }
+  if (sel.t === 'g') { const G = A.gates[it.grade]; set('p_w', m2(it.width)); set('p_wr', '(' + m1(G.min) + ' to ' + m1(G.max) + ')'); set('p_pts', G.points != null ? String(G.points) : '');
+    $('panel').querySelectorAll('[data-grade]').forEach(b => b.classList.toggle('on', b.dataset.grade === it.grade)); }
+}
+function panelInput(e, done) {
+  if (e.target.id === 'p_loose') { if (done) toggleLoose(e.target.checked); return; }
+  const it = selItem(); if (!it) return; const id = e.target.id, v = parseFloat(e.target.value);
+  if (isNaN(v)) { if (done) renderPanel(); return; }
+  if (id === 'p_ds') it.ds = v; else if (id === 'p_off') it.off = v; else if (id === 'p_yaw') it.yaw = normYaw(v);
+  else if (id === 'p_scr' || id === 'p_sc') { const a = assetById[it.asset]; if (id === 'p_sc' && !done && (v < scMin(it) * 100 || v > a.scale.max * 100)) return; it.scale = r2(clamp(id === 'p_sc' ? v / 100 : v, scMin(it), a.scale.max)); }
+  else if (id === 'p_w') { const G = A.gates[it.grade]; if (!done && (v < G.min || v > G.max)) return; it.width = r2(clamp(v, G.min, G.max)); }
+  else return;
+  it.ds = clamp(it.ds, 0, len()); it.off = clamp(it.off, offMin(), offMax());
+  if (done) { fixPos(it); commit(); } else { renderPanel(); redraw(); }
+}
+$('panel').addEventListener('input', e => panelInput(e, false));
+$('panel').addEventListener('change', e => panelInput(e, true));
+$('panel').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.target.blur(); });
+$('panel').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'p_dup') duplicateSel(); else if (b.id === 'p_del') deleteSel();
+  else if (b.id === 'p_fwd') reorder(1); else if (b.id === 'p_back') reorder(-1);
+  else if (b.id === 'p_hide') { $('cute').checked = false; toggleUte(); }
+  else if (b.dataset.grade) { const it = selItem(), G = A.gates[b.dataset.grade]; if (!it || it.grade === b.dataset.grade) return;
+    const wasDef = Math.abs(it.width - A.gates[it.grade].width) < 0.005; it.grade = b.dataset.grade; it.width = wasDef ? G.width : r2(clamp(it.width, G.min, G.max)); panelKey = ''; commit(); }
+});
+
+// ---------- editing actions ----------
+function duplicateSel() {
+  const it = selItem(); if (!it || sel.t === 'u') return;
+  const c = Object.assign({}, it); c.ds += 0.5; c.off -= 0.5; fixPos(c);
+  if (sel.t === 'o') { if (doc.objects.length >= 200) return toast('A piece can hold up to 200 rocks and logs.');
+    if (c.loose && doc.objects.filter(o => o.loose).length >= BD.MAX_LOOSE) { delete c.loose; c.scale = Math.max(c.scale, scMin(c)); toast('A piece can hold up to ' + BD.MAX_LOOSE + ' loose logs, so the copy is a fixed one.'); }
+    doc.objects.push(c); sel = {t: 'o', i: doc.objects.length - 1}; }
+  else { if (doc.gates.length >= 7) return toast('A piece can hold up to 7 gates.'); doc.gates.push(c); sel = {t: 'g', i: doc.gates.length - 1}; }
+  commit();
+}
+function deleteSel() {
+  if (!selItem()) return;
+  if (sel.t === 'o') doc.objects.splice(sel.i, 1); else if (sel.t === 'g') doc.gates.splice(sel.i, 1); else { $('cute').checked = false; return toggleUte(); }
+  sel = null; commit();
+}
+function toggleUte() {
+  if (!doc) { $('cute').checked = false; return; }
+  if ($('cute').checked) { if (!doc.ute) { const r = spot.rows[Math.min(5, spot.rows.length - 1)]; doc.ute = lastUte || {ds: clamp(wds(W / 2), 3, len() - 3), off: (r && r.line) || 0, yaw: 0}; fixPos(doc.ute); } sel = {t: 'u', i: 0}; }
+  else { lastUte = doc.ute; doc.ute = null; if (sel && sel.t === 'u') sel = null; }
+  commit();
+}
+$('cute').onchange = e => { toggleUte(); e.target.blur(); };
+$('csnap').onchange = e => { try { localStorage.setItem('bdcb:snap', e.target.checked ? '1' : ''); } catch (err) {} e.target.blur(); };
+$('zin').onclick = e => { zoomBy(1.3); e.target.blur(); }; $('zout').onclick = e => { zoomBy(1 / 1.3); e.target.blur(); }; $('zfit').onclick = e => { fit(); e.target.blur(); };
+$('bundo').onclick = e => { undo(); e.target.blur(); }; $('bredo').onclick = e => { redo(); e.target.blur(); };
+function setMeasure(on) { measure.on = on; if (!on) measure.a = measure.b = measure.h = null; $('bmeasure').classList.toggle('on', on); cv.style.cursor = on ? 'crosshair' : 'default'; redraw(); }
+$('bmeasure').onclick = e => { setMeasure(!measure.on); e.target.blur(); };
+$('name').addEventListener('input', () => { if (doc) { doc.name = $('name').value.trim() || doc.name; BD.titles(doc.name); scheduleDraft(); } });
+$('name').addEventListener('change', () => { if (doc) { $('name').value = doc.name; changed(); } });
+$('name').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+$('notes').addEventListener('input', () => { if (doc) { doc.notes = $('notes').value; scheduleDraft(); } });
+
+// ---------- mouse on the creek ----------
+const evPos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+cv.addEventListener('pointerdown', e => {
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+  const [x, y] = evPos(e), ds = wds(x), off = woff(y);
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  e.preventDefault();
+  if (e.button === 1 || (e.button === 0 && spaceDown) || !doc) { drag = {mode: 'pan', x, y}; cv.style.cursor = 'grabbing'; return; }
+  if (e.button !== 0) return;
+  if (measure.on) { if (!measure.a || measure.b) { measure.a = [ds, off]; measure.b = null; measure.h = null; } else measure.b = [ds, off]; redraw(); return; }
+  const h = handlePos();
+  if (h && Math.hypot(x - h[0], y - h[1]) <= 13) { drag = {mode: 'rot', moved: false}; return; }
+  const p = pick(ds, off);
+  if (p) { sel = p; const it = selItem(); drag = {mode: 'move', dx: ds - it.ds, dy: off - it.off, x, y, moved: false}; cv.style.cursor = 'move'; renderPanel(); redraw(); }
+  else { drag = {mode: 'pan', x, y, x0: x, y0: y, clear: true}; }
+});
+cv.addEventListener('pointermove', e => {
+  const [x, y] = evPos(e), ds = wds(x), off = woff(y);
+  if (spot) $('where').textContent = (ds >= 0 && ds <= len() && off >= offMin() && off <= offMax()) ? m1(ds) + ' m down, ' + (Math.abs(off) < .05 ? 'middle' : m1(Math.abs(off)) + ' m ' + (off > 0 ? 'left' : 'right')) : '';
+  if (measure.on && measure.a && !measure.b) { measure.h = [ds, off]; redraw(); }
+  if (!drag) { if (!measure.on && doc) { const h = handlePos(); cv.style.cursor = (h && Math.hypot(x - h[0], y - h[1]) <= 13) ? 'crosshair' : spaceDown ? 'grab' : pick(ds, off) ? 'move' : 'default'; } return; }
+  if (drag.mode === 'pan') { view.ds0 -= (x - drag.x) / view.z; view.offTop += (y - drag.y) / view.z; drag.x = x; drag.y = y; if (drag.clear && Math.hypot(x - drag.x0, y - drag.y0) > 4) { drag.clear = false; cv.style.cursor = 'grabbing'; } redraw(); return; }
+  const it = selItem(); if (!it) return;
+  if (drag.mode === 'move') {
+    if (!drag.moved && Math.hypot(x - drag.x, y - drag.y) < 3) return;
+    drag.moved = true; it.ds = snapv(ds - drag.dx); it.off = snapv(off - drag.dy); fixPos(it);
+  } else if (drag.mode === 'rot') {
+    let a = Math.atan2(off - it.off, ds - it.ds) / RAD; a = e.shiftKey ? Math.round(a / 15) * 15 : Math.round(a);
+    it.yaw = normYaw(a); drag.moved = true;
+  }
+  renderPanel(); redraw();
+});
+function endDrag() {
+  if (!drag) return; const d = drag; drag = null; cv.style.cursor = measure.on ? 'crosshair' : 'default';
+  if (d.mode === 'pan') { if (d.clear && sel) { sel = null; renderPanel(); redraw(); } return; }
+  if (d.moved) commit();
+}
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('wheel', e => {
+  e.preventDefault(); const [x, y] = evPos(e);
+  let dy = e.deltaY, dx = e.deltaX; if (e.deltaMode === 1) { dy *= 30; dx *= 30; }
+  const wheelMouse = !e.ctrlKey && dx === 0 && dy !== 0 && (e.deltaMode === 1 || (Number.isInteger(e.deltaY) && (Math.abs(e.deltaY) % 100 === 0 || Math.abs(e.deltaY) % 120 === 0)));
+  if (e.ctrlKey || e.metaKey) zoomAt(x, y, view.z * Math.exp(-clamp(dy, -60, 60) * 0.012));
+  else if (wheelMouse) zoomAt(x, y, view.z * Math.exp(-Math.sign(dy) * 0.18));
+  else { view.ds0 += dx / view.z; view.offTop -= dy / view.z; redraw(); }
+}, {passive: false});
+let gz = 0;       // Safari pinch
+document.addEventListener('gesturestart', e => { e.preventDefault(); gz = view.z; });
+document.addEventListener('gesturechange', e => { e.preventDefault(); if (PHONE) return; const r = cv.getBoundingClientRect(); if (gz) zoomAt(clamp(e.clientX - r.left, 0, W), clamp(e.clientY - r.top, 0, H), gz * e.scale); });
+document.addEventListener('gestureend', e => { e.preventDefault(); gz = 0; });
+
+// ---------- keys ----------
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey, t = e.target, tag = t && t.tagName;
+  const typing = tag === 'TEXTAREA' || tag === 'SELECT' || (tag === 'INPUT' && !['checkbox', 'button', 'radio'].includes(t.type));
+  if (mod && e.code === 'KeyS') { e.preventDefault(); if (typing) t.blur(); if (doc && save()) toast('Saved in this browser. (It is kept as you go, so there is no need to.)'); return; }
+  if (e.key === 'Escape') {
+    if (askDone) return askAnswer(false);
+    if (!$('sharedlg').classList.contains('hidden')) return $('sharedlg').classList.add('hidden');
+    if (!$('listdlg').classList.contains('hidden')) return $('listdlg').classList.add('hidden');
+    if (typing) return t.blur();
+    if (measure.on || measure.a) return setMeasure(false);
+    if (sel) { sel = null; renderPanel(); redraw(); }
+    return;
+  }
+  if (askDone || !$('listdlg').classList.contains('hidden') || !$('sharedlg').classList.contains('hidden') || typing) return;
+  if (e.code === 'Space') { spaceDown = true; e.preventDefault(); if (!drag) cv.style.cursor = 'grab'; return; }
+  if (!doc) return;
+  if (mod && e.code === 'KeyZ') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+  if (mod && e.code === 'KeyY') { e.preventDefault(); redo(); return; }
+  if (mod && e.code === 'KeyD') { e.preventDefault(); duplicateSel(); return; }
+  if (mod) return;
+  const it = selItem();
+  if (e.key === '+' || e.key === '=') return zoomBy(1.3);
+  if (e.key === '-' || e.key === '_') return zoomBy(1 / 1.3);
+  if (!it) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteSel(); return; }
+  if ((e.key === ']' || e.key === '[') && sel.t === 'o') { e.preventDefault(); reorder(e.key === ']' ? 1 : -1); return; }
+  if (e.code === 'KeyR' && sel.t !== 'g') { e.preventDefault(); it.yaw = normYaw(it.yaw + (e.shiftKey ? -1 : 1) * (e.altKey ? 1 : 15)); commit(); return; }
+  const step = e.shiftKey ? 0.5 : 0.05, mv = {ArrowRight: [step, 0], ArrowLeft: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step]}[e.key];
+  if (mv) { e.preventDefault(); it.ds += mv[0]; it.off += mv[1]; fixPos(it); commit(); }
+});
+document.addEventListener('keyup', e => { if (e.code === 'Space') { spaceDown = false; if (!drag) cv.style.cursor = measure.on ? 'crosshair' : 'default'; } });
+window.addEventListener('blur', () => { spaceDown = false; });
+window.addEventListener('beforeunload', () => { save(); });
+window.addEventListener('pagehide', () => { save(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+document.addEventListener('selectstart', e => { const t = e.target.nodeType === 1 ? e.target : e.target.parentElement; if (!t || !t.closest('input,textarea')) e.preventDefault(); });
+$('help').addEventListener('toggle', () => { try { localStorage.setItem('bdcb:help', $('help').open ? 'open' : 'shut'); } catch (e) {} });
+
+// ---------- the phone builder: the map fills the screen, fingers do the rest ----------
+// One finger: tap selects, drag moves the thing under it or slides the map; with something selected, a drag on or inside
+// its ring turns it. Two fingers: a pinch resizes the selected thing (a gate: its gap) or, with nothing selected, zooms;
+// moving together slides the map. Each gesture is one undo step.
+function ringOf(it) {      // the turning ring round the selected rock, log or ute: centre and radius on the screen
+  if (!it || sel.t === 'g') return null;
+  const reach = sel.t === 'u' ? Math.hypot(A.ute.length, A.ute.width) / 2 : reachOf(assetById[it.asset], it.scale);
+  return {x: sx(it.ds), y: sy(it.off), r: Math.max(56, reach * view.z + 30)};
+}
+function drawRing(it) {
+  const g = ringOf(it); if (!g) return;
+  ctx.save(); ctx.strokeStyle = 'rgba(26,115,232,.12)'; ctx.lineWidth = 46; ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 7); ctx.stroke();
+  ctx.strokeStyle = 'rgba(26,115,232,.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+  const a = -it.yaw * RAD, hx = g.x + g.r * Math.cos(a), hy = g.y + g.r * Math.sin(a);      // where it points
+  ctx.strokeStyle = 'rgba(26,115,232,.7)'; ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(hx, hy); ctx.stroke();
+  ctx.beginPath(); ctx.arc(hx, hy, 9, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#1a73e8'; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.lineWidth = 2;
+  for (const s of [1, -1]) { const b = a + s * 0.36, c = b + s * 0.1, r = g.r;      // little arrows: drag round
+    ctx.beginPath(); ctx.arc(g.x, g.y, r, Math.min(a + s * 0.16, b), Math.max(a + s * 0.16, b)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(g.x + (r - 6) * Math.cos(b), g.y + (r - 6) * Math.sin(b)); ctx.lineTo(g.x + r * Math.cos(c), g.y + r * Math.sin(c)); ctx.lineTo(g.x + (r + 6) * Math.cos(b), g.y + (r + 6) * Math.sin(b)); ctx.stroke(); }
+  ctx.restore();
+}
+let phoneKey = '', shareCache = null;
+function phoneShow() {      // the corner buttons and the readout follow the selection (called after each drawing)
+  const it = selItem(), out = [];
+  if (it && sel.t === 'o') { const a = assetById[it.asset], R = restAll()[sel.i], k = classOf(a, it.scale, R.stacked ? R.top : null);
+    out.push(a.name, R.stacked ? m2(a.height * it.scale) + ' m high, its top ' + m2(R.top) + ' m above the bed' : m2(a.height * it.scale) + ' m high', CLS_COL[k], (it.loose ? 'Loose: the ute can push it and roll it. ' : '') + classText(a, k)); }
+  else if (it && sel.t === 'g') { const G = A.gates[it.grade]; out.push((G.label || it.grade) + ' gate', 'Gap ' + m2(it.width) + ' m (' + m1(G.min) + ' to ' + m1(G.max) + ')', GATE_COL[it.grade], (G.points != null ? G.points + ' points. ' : '') + 'Pinch to change the gap.'); }
+  else if (it) out.push('The ute', m1(A.ute.length) + ' m long, ' + m1(A.ute.width) + ' m wide', '', 'A true-size outline for judging gaps.');
+  const mm = measure.a && measure.b ? m2(Math.hypot(measure.b[0] - measure.a[0], measure.b[1] - measure.a[1])) : '';
+  const key = JSON.stringify([out, sel && sel.t, undoStack.length, redoStack.length, !!doc, measure.on, mm]);
+  if (key === phoneKey) return; phoneKey = key;
+  $('pundo').disabled = !undoStack.length; $('pmredo').disabled = !redoStack.length;
+  ['pmplay', 'pmshare', 'pmfit', 'pmmeasure'].forEach(id => { $(id).disabled = !doc; });
+  const t = it ? sel.t : '';
+  $('pdel').classList.toggle('hidden', !t); $('pcopy').classList.toggle('hidden', !t || t === 'u');
+  $('pfwd').classList.toggle('hidden', t !== 'o'); $('pback').classList.toggle('hidden', t !== 'o');
+  const lo = t === 'o' && BD.canLoose(it.asset); $('ploose').classList.toggle('hidden', !lo); $('ploose').classList.toggle('on', lo && !!it.loose); $('ploose').setAttribute('aria-pressed', lo && it.loose ? 'true' : 'false');
+  $('pmeasure').classList.toggle('hidden', !measure.on);
+  $('pmmeasure').textContent = measure.on ? 'Stop measuring' : 'Measure';
+  const R = $('pread'); R.textContent = ''; R.classList.toggle('hidden', !it && !measure.on);
+  if (it) { R.appendChild(BD.el('b', {text: out[0]})); R.appendChild(BD.el('div', {text: out[1]}));
+    const l = BD.el('div', null, [out[3]]); if (out[2]) { const d = BD.el('i'); d.style.background = out[2]; l.prepend(d); } R.appendChild(l); }
+  else if (measure.on) { R.appendChild(BD.el('b', {text: 'Measuring'})); R.appendChild(BD.el('div', {text: mm ? mm + ' m between the two points. Tap again to start over.' : 'Tap two points on the creek.'})); }
+}
+function bar(open) { $('pbar').classList.toggle('open', open); $('ptab').classList.toggle('hidden', open); }
+function menu(open) {
+  if (open === !$('pmenuw').classList.contains('hidden')) return;
+  $('pmenuw').classList.toggle('hidden', !open);
+  if (open) { bar(false); prepShare(); }
+  else if (document.activeElement && $('psheet').contains(document.activeElement)) document.activeElement.blur();
+}
+async function prepShare() {      // the link made ahead, so the phone's share sheet can open straight from the tap
+  shareCache = null; if (!doc) return; const s = serial();
+  try { shareCache = {s, url: await BD.shareUrl(body())}; } catch (e) {}
+}
+async function phoneShare() {
+  if (!doc) return; save();
+  let url = shareCache && shareCache.s === serial() ? shareCache.url : null;
+  if (!url) try { url = await BD.shareUrl(body()); } catch (e) { return toast(e instanceof BD.Bad ? e.message : 'The link could not be made.'); }
+  if (navigator.share) { try { await navigator.share({title: doc.name, url}); menu(false); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  menu(false);
+  if (await BD.copy(url)) return toast('Link copied. Paste it in a message to a mate.');
+  sharePiece();      // the browser would not copy it: the dialog, to copy it by hand
+}
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function fullScreen(toggle) {      // full screen, and then the screen held sideways (Android lets a page lock it only in full screen)
+  const de = document.documentElement, req = de.requestFullscreen || de.webkitRequestFullscreen;
+  if (fsEl()) { if (toggle) (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  if (!req) { if (toggle) toast('This browser does not let a web page fill the screen. On an iPhone: tap Share, then Add to Home Screen, and open the builder from the new icon.'); return; }
+  const turn = () => { try { const o = screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'); if (o && o.catch) o.catch(() => {}); } catch (e) {} };
+  try { const q = req.call(de); if (q && q.then) q.then(turn, () => {}); else turn(); } catch (e) {}
+}
+function phoneInit() {
+  // the header's own fields move into the menu, with their handlers
+  $('pname').replaceWith($('name')); $('pnotes').replaceWith($('notes')); $('pplace').appendChild($('placewrap')); $('pstate').replaceWith($('state'));
+  const ute = $('cute').closest('label'); ute.className = 'tog'; $('pute').replaceWith(ute);
+  $('placewrap').title = '';
+  // the bar: every gate, rock and log as a picture
+  const row = $('prow'), tiles = Object.keys(A.gates).map(k => ['gate', k, (A.gates[k].label || k) + ' gate']), groups = [];
+  for (const a of A.assets) if (!groups.includes(a.group)) groups.push(a.group);
+  for (const gname of groups) for (const a of A.assets) if (a.group === gname) tiles.push(['asset', a.id, a.name]);
+  for (const [kind, id, name] of tiles) {
+    const c = BD.el('canvas', {[kind === 'gate' ? 'data-g' : 'data-a']: id}), b = BD.el('button', {class: 'ptile', [kind === 'gate' ? 'data-gate' : 'data-asset']: id}, [c]);
+    b.setAttribute('aria-label', name); row.appendChild(b); thumb(c, 74, 54, 24);
+  }
+  row.addEventListener('click', e => { const t = e.target.closest('.ptile'); if (!t) return; bar(false); place(t.dataset.gate ? 'gate' : 'asset', t.dataset.gate || t.dataset.asset); });
+  $('ptab').onclick = () => bar(true);
+  $('pundo').onclick = () => undo(); $('pmenu').onclick = () => menu($('pmenuw').classList.contains('hidden'));
+  $('pdel').onclick = () => deleteSel(); $('pcopy').onclick = () => duplicateSel(); const stackBtn = dir => { const o = selItem(), was = o && ordOf(o), n = toastN; reorder(dir); if (o && ordOf(o) !== was && toastN === n) toast(dir > 0 ? 'On top now. It rests on what is under it.' : 'Underneath now.', 2500); };
+  $('pfwd').onclick = () => stackBtn(1); $('pback').onclick = () => stackBtn(-1); $('ploose').onclick = () => toggleLoose();
+  $('pmeasure').onclick = () => setMeasure(false);
+  $('pmenuw').addEventListener('click', e => { if (e.target === $('pmenuw')) menu(false); });
+  $('pmclose').onclick = () => menu(false);
+  $('pmredo').onclick = () => redo();
+  $('pmfit').onclick = () => { menu(false); fit(); };
+  $('pmmeasure').onclick = () => { menu(false); if (!measure.on) { sel = null; renderPanel(); } setMeasure(!measure.on); };
+  $('pmplay').onclick = () => playPiece(false);
+  $('pmshare').onclick = () => phoneShare();
+  $('pmnew').onclick = () => { menu(false); newLayout(); };
+  $('pmopen').onclick = () => { menu(false); showList(); };
+  $('pmfs').onclick = () => fullScreen(true);
+  $('cute').addEventListener('change', () => menu(false));
+  const fsLabel = () => { $('pmfs').textContent = fsEl() ? 'Leave full screen' : 'Full screen'; };
+  document.addEventListener('fullscreenchange', fsLabel); document.addEventListener('webkitfullscreenchange', fsLabel);
+  // the first touch asks for full screen (held sideways), where the browser allows it; so does a tap on the "turn" card
+  const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  const first = () => { document.removeEventListener('touchend', first, true); if (!standalone) fullScreen(false); };
+  document.addEventListener('touchend', first, true);
+  $('turn').addEventListener('click', () => fullScreen(false));
+  matchMedia('(orientation: landscape)').addEventListener('change', e => { if (e.matches) setTimeout(fit, 150); });
+  // no page zoom, no pull to refresh: the map has the fingers
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 || e.target === cv) e.preventDefault(); }, {passive: false});
+
+  // fingers on the map (caught on the way down, so the mouse code under it never sees them)
+  const wrap = $('wrap'), pts = new Map(); let g = null;
+  const xy = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const around = (x, y, f) => { for (const [dx, dy] of [[0, 0], [12, 0], [-12, 0], [0, 12], [0, -12], [9, 9], [-9, 9], [9, -9], [-9, -9]]) { const r = f(wds(x + dx), woff(y + dy)); if (r) return r; } return null; };
+  const onSel = (x, y) => { const it = selItem(); return !!it && !!around(x, y, (ds, off) => sel.t === 'o' ? hitObj(it, ds, off) : sel.t === 'g' ? hitGate(it, ds, off) : hitUte(ds, off)); };
+  const stackAt = (x, y) => { const ds = wds(x), off = woff(y), L = [], seq = drawOrder();      // everything under the finger, the top one first
+    for (let i = doc.gates.length - 1; i >= 0; i--) if (hitGate(doc.gates[i], ds, off)) L.push({t: 'g', i});
+    for (let k = seq.length - 1; k >= 0; k--) if (hitObj(doc.objects[seq[k]], ds, off)) L.push({t: 'o', i: seq[k]});
+    if (hitUte(ds, off)) L.push({t: 'u', i: 0});
+    return L; };
+  const two = () => { const [a, b] = g.ids.map(i => pts.get(i)); return a && b ? [Math.hypot(a[0] - b[0], a[1] - b[1]), (a[0] + b[0]) / 2, (a[1] + b[1]) / 2] : null; };
+  wrap.addEventListener('pointerdown', e => {
+    if (e.target !== cv) return; e.stopPropagation(); e.preventDefault();
+    bar(false); menu(false);
+    if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    const [x, y] = xy(e); pts.set(e.pointerId, [x, y]);
+    if (pts.size === 1) {
+      g = {mode: 'pan', x0: x, y0: y, x, y, moved: false, was: sel};
+      if (!doc || measure.on) return;
+      const it = selItem(), R = ringOf(it), d = R ? Math.hypot(x - R.x, y - R.y) : 1e9; let p = null;
+      if (it && onSel(x, y)) g.mode = 'move';
+      else if (R && Math.abs(d - R.r) <= 26) g.mode = 'rot';
+      else if ((p = around(x, y, pick))) { sel = p; g.mode = 'move'; g.picked = true; }
+      else if (R && d < R.r) g.mode = 'rot';
+      const s = selItem();
+      if (g.mode === 'move') { g.dx = wds(x) - s.ds; g.dy = woff(y) - s.off; }
+      if (g.mode === 'rot') { g.a = Math.atan2(woff(y) - s.off, wds(x) - s.ds) / RAD; g.yaw0 = s.yaw; g.turn = 0; }
+      renderPanel(); redraw();
+    } else if (pts.size === 2 && g && g.mode !== 'done') {
+      if (g.picked && !g.moved) sel = g.was;      // the first finger only landed on a thing: a pinch keeps the selection there was
+      const it = doc && selItem(); g = {mode: 'two', ids: [...pts.keys()], moved: true, it: it && sel.t !== 'u' ? it : null};
+      const r = two(); Object.assign(g, {d0: Math.max(10, r[0]), wx: wds(r[1]), wy: woff(r[2]), z0: view.z, s0: it && it.scale, w0: it && it.width});
+      renderPanel(); redraw();
+    }
+  }, true);
+  wrap.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return; e.stopPropagation();
+    const [x, y] = xy(e); pts.set(e.pointerId, [x, y]); if (!g || g.mode === 'done') return;
+    if (g.mode === 'two') {
+      const r = two(); if (!r) return; const f = r[0] / g.d0; let z = view.z;
+      if (g.it && sel.t === 'o') { const a = assetById[g.it.asset]; g.it.scale = r2(clamp(g.s0 * f, scMin(g.it), a.scale.max)); }
+      else if (g.it) { const G = A.gates[g.it.grade]; g.it.width = r2(clamp(g.w0 * f, G.min, G.max)); }
+      else z = clamp(g.z0 * f, 4, 160);
+      view.z = z; view.ds0 = g.wx - r[1] / z; view.offTop = g.wy + r[2] / z; renderPanel(); redraw(); return;
+    }
+    if (!g.moved && Math.hypot(x - g.x0, y - g.y0) < 8) return;
+    g.moved = true;
+    if (g.mode === 'pan') { view.ds0 -= (x - g.x) / view.z; view.offTop += (y - g.y) / view.z; g.x = x; g.y = y; redraw(); return; }
+    const it = selItem(); if (!it) return;
+    if (g.mode === 'move') { it.ds = snapv(wds(x) - g.dx); it.off = snapv(woff(y) - g.dy); fixPos(it); }
+    else { const a = Math.atan2(woff(y) - it.off, wds(x) - it.ds) / RAD; let d = a - g.a; d -= Math.round(d / 360) * 360; g.turn += d; g.a = a; it.yaw = normYaw(Math.round(g.yaw0 + g.turn)); }
+    renderPanel(); redraw();
+  }, true);
+  const up = e => {
+    if (!pts.has(e.pointerId)) return; e.stopPropagation(); pts.delete(e.pointerId);
+    if (!g) return;
+    if (pts.size) { if (g.mode === 'two') g.mode = 'done'; return; }      // (the last finger of a pinch does nothing more)
+    const d = g; g = null;
+    if (d.moved || e.type === 'pointercancel') return commit();
+    if (measure.on && doc) { const p = [wds(d.x0), woff(d.y0)]; if (!measure.a || measure.b) { measure.a = p; measure.b = null; } else measure.b = p; return redraw(); }
+    if ((d.mode === 'pan' || d.mode === 'rot') && sel) { sel = null; renderPanel(); redraw(); }      // a tap on empty creek lets go
+    else if (d.mode === 'move' && !d.picked && doc && sel) {      // a tap on the selected thing: the next one under the finger
+      const L = stackAt(d.x0, d.y0), k = L.findIndex(q => q.t === sel.t && q.i === sel.i);
+      if (L.length > 1 && k >= 0) { sel = L[(k + 1) % L.length]; renderPanel(); redraw(); } }
+  };
+  wrap.addEventListener('pointerup', up, true); wrap.addEventListener('pointercancel', up, true);
+}
+
+// ---------- start ----------
+async function start() {
+  BD.titles('Builder');
+  try { await BD.loadData(); A = BD.A; CV = BD.CV; }
+  catch (e) { const P = $('panel'); P.textContent = ''; P.appendChild(BD.el('h2', {text: 'Could not load the rocks'})); P.appendChild(BD.el('p', {class: 'hint', text: 'Reload the page to try again.'})); return; }
+  RULES = Object.assign(RULES, A.rules || {});
+  A.ute = Object.assign({length: 5.3, width: 1.9, wheelbase: 3.2, track: 1.6, front_overhang: 0.9, tyre_r: 0.4, tyre_w: 0.28, clearance: 0.25}, A.ute || {});
+  A.assets.forEach(a => { assetById[a.id] = a; prepAsset(a); });
+  for (const s of CV.spots || []) $('place').appendChild(BD.el('option', {value: String(s.slot), text: BD.placeName(s.slot)}));
+  try { $('csnap').checked = !!localStorage.getItem('bdcb:snap'); $('help').open = localStorage.getItem('bdcb:help') !== 'shut'; } catch (e) { $('help').open = true; }
+  buildPalette(); if (PHONE) phoneInit();
+  new ResizeObserver(resize).observe($('wrap')); resize();
+  setSpot(DEFAULT_SLOT); fit();
+  requestAnimationFrame(loop);
+  window.__sp = {get doc() { return doc; }, get sel() { return sel; }, view, sx, sy, handlePos, body, dirty, fit, draw, fake(d) { doc = d; }, rest: () => doc ? restAll() : [], reorder, overlapping, commit, save, place, setSel(v) { sel = v; renderPanel(); draw(); redraw(); }, ring: () => sel ? ringOf(selItem()) : null, undos: () => undoStack.length};      // for the checks in test/
+  // ?open=<id>: a piece just copied into this browser from a shared link; otherwise the one last worked on
+  const want = new URLSearchParams(location.search).get('open');
+  if (want != null) try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  let last = want; if (!last) try { last = localStorage.getItem('bdcb:last'); } catch (e) {}
+  if (!(last && openLayout(last, true))) { $('welcome').classList.remove('hidden'); showHeader(); showState(); renderPanel(); }
+  if (!BD.store.ok()) toast('This browser is not letting the page keep anything (private browsing?). Pieces you build here will not be saved.');
+  window.__sp.ready = true;
+}
+start();
+</script>
+</body>
+</html>

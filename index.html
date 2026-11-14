@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bush Drift</title>
+<style>
+  html, body { margin: 0; background: #f4f1e8; color: #23271f; font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  h2 { font-size: 19px; margin: 34px 0 8px; }
+  p.lead { font-size: 18px; margin: 0 0 22px; color: #3a4034; }
+  .btns { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 6px; }
+  a.btn { display: inline-block; border: 1px solid #b9b3a2; border-radius: 8px; background: #fff; color: #23271f; padding: 10px 18px; text-decoration: none; font-weight: 600; }
+  a.btn.primary { background: #2f6b3c; border-color: #2f6b3c; color: #fff; }
+  ol.how { padding: 0; margin: 0; list-style: none; counter-reset: n; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  ol.how li { counter-increment: n; background: #fbf9f3; border: 1px solid #d6d0c0; border-radius: 10px; padding: 12px 14px 12px 50px; position: relative; }
+  ol.how li::before { content: counter(n); position: absolute; left: 13px; top: 12px; width: 26px; height: 26px; border-radius: 50%; background: #2f6b3c; color: #fff; font-weight: 700; text-align: center; line-height: 26px; }
+  ol.how li > b:first-child { display: block; }
+  kbd { background: #444a3d; color: #fff; border-radius: 3px; padding: 1px 6px; font: 13px system-ui, sans-serif; white-space: nowrap; }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 4px 10px 4px 0; vertical-align: top; border-bottom: 1px solid #e3ddcc; }
+  td:first-child { white-space: nowrap; width: 1%; }
+  .small { font-size: 14px; color: #4c5246; }
+  #phone { display: none; background: #fff3cd; border: 1px solid #e0cf9a; border-radius: 8px; padding: 10px 14px; margin: 16px 0; font-size: 15px; }
+  @media (max-width: 700px), (pointer: coarse) { #phone { display: block; } ol.how { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1 data-title>Bush Drift</h1>
+  <p class="lead">Build a rocky creek crossing, drive a ute over it, take photos of the ute hung up on your handiwork, and send the lot to your mates.</p>
+  <div id="phone"><b>On a phone?</b> It all works with fingers, held sideways. <b>Driving:</b> open a piece and use the on-screen controls; the Photo button stops the ute and lets you look about and take a picture. <b>Building:</b> tap the tab at the bottom of the map to add a rock, log or gate. Drag one to move it, drag round the ring around it to turn it, and pinch to resize it. Tap empty creek to let go, then pinch to zoom the map. The menu at the top right has Drive it, Share and a full how-to. <b>Full screen:</b> on Android, tap Full screen to hide the browser's bars. An iPhone does not let a web page do that; if you want it, tap Share, then <b>Add to Home Screen</b>, and open it from the new icon.</div>
+  <div class="btns">
+    <a class="btn primary" href="builder.html">Open the builder</a>
+    <a class="btn" href="play/index.html">Drive the example piece</a>
+  </div>
+
+  <h2>How it works</h2>
+  <ol class="how">
+    <li><b>Build</b>Put rocks, logs and gates on a stretch of creek, on a plan seen from above. Stack them if you like. Six stretches to pick from.</li>
+    <li><b>Drive</b>Press <b>Drive it</b> and the ute is waiting just above your piece, in Low Range. See if it can be done.</li>
+    <li><b>Photo</b>Press <kbd>V</kbd> at any moment. Everything holds still and you get a free camera to fly around the ute. <kbd>C</kbd> takes the photo.</li>
+    <li><b>Share</b>Press <b>Share</b> for a link with the whole piece inside it. Your mates open it, drive it, and can make their own copy to change.</li>
+  </ol>
+
+  <h2>Keys for driving</h2>
+  <table>
+    <tr><td><kbd>&uarr;</kbd></td><td>Accelerate. The ute waits on the brakes until you first press it.</td></tr>
+    <tr><td><kbd>&darr;</kbd></td><td>Brake. Held when stopped: reverse.</td></tr>
+    <tr><td><kbd>&larr;</kbd> <kbd>&rarr;</kbd></td><td>Steer</td></tr>
+    <tr><td><kbd>Space</kbd></td><td>Handbrake</td></tr>
+    <tr><td><kbd>L</kbd></td><td>Low Range on or off</td></tr>
+    <tr><td><kbd>R</kbd></td><td>Recover: the ute is set down just up the creek</td></tr>
+    <tr><td><kbd>T</kbd></td><td>Back to the start of the piece</td></tr>
+    <tr><td><kbd>V</kbd></td><td>Stop for a photo, and again to drive on</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Pause menu</td></tr>
+    <tr><td><kbd>F</kbd></td><td>Full screen</td></tr>
+  </table>
+  <p class="small">Click the game first so it has the keyboard.</p>
+
+  <h2>Keys for photos</h2>
+  <table>
+    <tr><td>Click the picture</td><td>The mouse looks about. Click again (or <kbd>Esc</kbd>) to get the pointer back.</td></tr>
+    <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>Fly forward, left, back and right (the arrow keys do the same)</td></tr>
+    <tr><td><kbd>E</kbd> <kbd>Q</kbd></td><td>Up and down</td></tr>
+    <tr><td><kbd>Shift</kbd></td><td>Hold to fly faster</td></tr>
+    <tr><td><kbd>H</kbd></td><td>Back to the first view</td></tr>
+    <tr><td><kbd>C</kbd></td><td>Take the photo. It is saved as a picture of the view alone, at full size.</td></tr>
+    <tr><td><kbd>V</kbd></td><td>Back to driving</td></tr>
+  </table>
+
+  <h2>Good to know</h2>
+  <p class="small">Your pieces are kept in your own browser, on your own computer. Nothing is sent anywhere: a share link carries the whole piece inside the link itself. Clearing the browser's data clears your pieces, so save the good ones as a file from <b>My pieces</b> in the builder. The game is a fair bit to load the first time (about 27 MB); after that it starts quickly.</p>
+</main>
+<script src="js/common.js"></script>
+<script>BD.titles('');</script>
+</body>
+</html>
